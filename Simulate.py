@@ -4,7 +4,7 @@ from Generate import *
 sim = Simulator()
 
 N = 10
-M = 4
+M = 2
 
 data = pd.DataFrame({'event':[0],'particle':[0],'hit':[0], 'x':[0.], 'y':[0.]})
 data = data.drop(data.index[[0]])
