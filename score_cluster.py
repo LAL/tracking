@@ -12,7 +12,7 @@ def evaluate(y_test, y_pred, particle = -1):
     listtoscore = [particle]
     if(particle < 0) : listtoscore = np.unique(y_test)
     
-    maxcluster = np.full(shape=len(y_test)+1,fill_value=-1)
+    dummyarray = np.full(shape=len(y_test)+1,fill_value=-1)
 
     for particle in listtoscore:
         
@@ -33,11 +33,15 @@ def evaluate(y_test, y_pred, particle = -1):
 
         if(nsubcluster > 0):
             # fix for degeneracy!
-            maxcluster[particle] = np.argmax(np.bincount(found_hits[found_hits[:] >= 0]))
-            eff = len(found_hits[found_hits[:] == maxcluster[particle]])/len(true_hits)
+
+            b=np.bincount(found_hits[found_hits[:] >= 0])
+            a=np.argmax(b)
+
+            maxcluster = a
+            eff = len(found_hits[found_hits[:] == maxcluster])/len(true_hits)
 
             # evaluate noise
-            overlap = (y_pred[:] == maxcluster[particle])
+            overlap = (y_pred[:] == maxcluster)
             others = (y_test[:] != particle)
             mask = overlap & others
             noise_hits = y_pred[mask]

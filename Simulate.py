@@ -1,9 +1,10 @@
 
-from Generate import *
+import numpy as np
+from generate import *
 
 sim = Simulator()
 
-N = 10
+N = 10000
 M = 2
 
 data = pd.DataFrame({'event':[0],'particle':[0],'hit':[0], 'x':[0.], 'y':[0.]})
@@ -13,6 +14,8 @@ for ievent in range(0,N):
 
     event = pd.DataFrame({'event':[0],'particle':[0],'hit':[0], 'x':[0.], 'y':[0.]})
     event = event.drop(event.index[[0]])
+
+    M = np.random.random_integers(2,20)
 
     for p in range(0,M):
         a = 0.6
@@ -33,7 +36,7 @@ for ievent in range(0,N):
     data=data.append(event, ignore_index=True)
 
 
-data.to_csv("test.csv",header=True,cols=['event','particle','hit', 'x', 'y'], engine='python')
+data.to_csv("input_2000.csv",header=True,cols=['event','particle','hit', 'x', 'y'], engine='python')
 
 
 
