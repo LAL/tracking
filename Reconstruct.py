@@ -8,7 +8,12 @@ import Fitting as fit
 if __name__ == '__main__':
     print("Reading file ...")
 
-    df = pd.read_csv("input_2000.csv")
+    fitter = TrackFitter(B=0.04/40)
+
+    data_track = pd.DataFrame({'event':[0],'track':[0],'pt':[0.], 'phi':[0.], 'xVtx':[0.], 'yVtx':[0.], 'chg':[0.]})
+    data_track = data_track.drop(data_track.index[[0]])
+
+    df = pd.read_csv("input_200.csv")
     y_df = df[['particle']]
     X_df = df.drop(['hit','particle','event'], axis=1)
     #replace particle with 100000000*event+particle
@@ -30,11 +35,17 @@ if __name__ == '__main__':
         y_event_predicted = y_event_predicted + [ievent*1000]*len(y_event_predicted)
         y_predicted = np.append(y_predicted,y_event_predicted)
 
+        for itrack in np.unique(y_event_predicted):
+            xhit = X_df['x'].values[y_event_predicted[:] == itrack]
+            yhit = X_df['y'].values[y_event_predicted[:] == itrack]
+            pt,phi,vx,vy=fitter.fit(x,y)
+
+
     df_result=pd.concat([df_result,pd.DataFrame({'track':y_predicted})],axis=1)
-    df_result.to_csv("result_2000.csv",header=True,cols=['event','track','hit', 'x', 'y'], engine='python')
+    df_result.to_csv("result_200.csv",header=True,cols=['event','track','hit', 'x', 'y'], engine='python')
 
     df_result=pd.concat([df_result,pd.DataFrame({'particle':y_train})],axis=1)
-    df_result.to_csv("result_truth_2000.csv",header=True,cols=['event','particle','track','hit', 'x', 'y'], engine='python')
+    df_result.to_csv("result_truth_200.csv",header=True,cols=['event','particle','track','hit', 'x', 'y'], engine='python')
 
 
 

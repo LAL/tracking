@@ -8,3 +8,11 @@ def polar(hits, rscale = 0.0000001):
     return ptsnew
 
 
+def rotate(x, y, phi)
+
+    c, s = np.cos(phi), np.sin(phi)
+    xr=c*x-s*y
+    yr=s*x+c*y
+
+    return xr,yr
+

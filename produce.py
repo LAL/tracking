@@ -1,6 +1,6 @@
 
 import numpy as np
-from simulate import *
+from Simulate import *
 
 sim = Simulator()
 

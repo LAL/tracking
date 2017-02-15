@@ -25,7 +25,7 @@ def evaluate(y_test, y_pred, particle = -1):
 
         nsubcluster=len(np.unique(found_hits[found_hits[:] >= 0]))
 
-        if(particle >= 0):
+#        if(particle >= 0):
             #            print "true hits : ", true_hits
             #            print "found hits : ", found_hits
             #            print "found clusters : ", nsubcluster
