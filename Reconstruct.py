@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 
-import tracking as trk
+import Clustering as trk
+import Fitting as fit
 
 
 if __name__ == '__main__':
@@ -15,11 +16,12 @@ if __name__ == '__main__':
     y_train = df['particle'].values + df['event'].values * 1000
     tracker = trk.ClusterDBSCAN(eps = 0.04)
     
-    tracker.fit(X_df.values, y_train)
+    tracker.fit(X_df.values[:1000], y_train[:1000])
 
     df_result = df.drop(['particle'], axis=1)
     y_predicted = np.array([])
     for ievent in np.unique(df['event'].values):
+        if ievent % 100 == 0 : print "processing event ", ievent
         event_df = df.loc[df['event']==ievent]
         y_df = event_df[['particle']]
         X_df = event_df.drop(['Unnamed: 0','hit','particle','event'], axis=1)

@@ -8,7 +8,7 @@ import plotting
 
 def analyze():
     
-    df = pd.read_csv("result_truth_20.csv")
+    df = pd.read_csv("result_truth_2000.csv")
 
     g_eff=[]
     g_fake=[]

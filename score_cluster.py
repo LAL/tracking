@@ -19,16 +19,16 @@ def evaluate(y_test, y_pred, particle = -1):
         eff = 0.;
         fake = 0.;
 
-        print "particle : ", particle
+#        print "particle : ", particle
         true_hits = y_test[y_test[:] == particle]
         found_hits = y_pred[y_test[:] == particle]
 
         nsubcluster=len(np.unique(found_hits[found_hits[:] >= 0]))
 
         if(particle >= 0):
-            print "true hits : ", true_hits
-            print "found hits : ", found_hits
-            print "found clusters : ", nsubcluster
+            #            print "true hits : ", true_hits
+            #            print "found hits : ", found_hits
+            #            print "found clusters : ", nsubcluster
 
 
         if(nsubcluster > 0):
@@ -47,8 +47,8 @@ def evaluate(y_test, y_pred, particle = -1):
             noise_hits = y_pred[mask]
             fake = len(noise_hits)/len(true_hits)
 
-            print "efficiency : ", eff
-            print "fake : ", fake
+#            print "efficiency : ", eff
+#            print "fake : ", fake
 
 
         eff_total+=eff
