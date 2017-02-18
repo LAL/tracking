@@ -4,9 +4,9 @@ from Simulate import *
 
 sim = Simulator()
 
-N = 200
+N = 100
 Mmin = 2
-Mmax = 9
+Mmax = 8
 
 data = pd.DataFrame({'event':[0],'particle':[0],'hit':[0], 'x':[0.], 'y':[0.]})
 data = data.drop(data.index[[0]])
@@ -25,6 +25,7 @@ for ievent in range(0,N):
 
 
     M = np.random.random_integers(Mmin,Mmax)
+    sim.detector.reset()
 
     for p in range(0,M):
         a = 0.6
@@ -37,7 +38,6 @@ for ievent in range(0,N):
         xVtx=position[0]
         yVtx=position[1]
 
-        sim.detector.reset()
         simtrack=sim.propagate(position,velocity, step = 20, id=p)
         simtrack = pd.concat(
                              [pd.DataFrame({'event':[ievent]*len(simtrack.index)}),
@@ -53,13 +53,13 @@ for ievent in range(0,N):
                                         )
                               )
 
-        #data=data.append(sim.detector.getHits(), ignore_index=True)
+    data=data.append(sim.detector.getHits(), ignore_index=True)
 
-    data=data.append(event, ignore_index=True)
+#    data=data.append(event, ignore_index=True)
     data_particle=data_particle.append(event_particle, ignore_index=True)
 
-data.to_csv("input_20.csv",header=True,cols=['event','particle','hit', 'x', 'y'], engine='python')
-data_particle.to_csv("particles_20.csv",header=True,cols=['event','particle','pt', 'phi', 'xVtx', 'yVtx'], engine='python')
+data.to_csv("hits_100.csv",header=True,cols=['event','particle','hit', 'x', 'y'], engine='python')
+data_particle.to_csv("particles_100.csv",header=True,cols=['event','particle','pt', 'phi', 'xVtx', 'yVtx'], engine='python')
 
 
 

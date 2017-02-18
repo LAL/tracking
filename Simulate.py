@@ -26,8 +26,8 @@ class Particle(object):
         self.momentum += acceleration;
         self.position += self.momentum;
 
-        detector.deposit(self.position)
-        if((time % stephit == 0) & (np.linalg.norm(self.position) > 5.)):
+        detector.deposit(self.position, self.id)
+        if((time % stephit == 0) & (np.linalg.norm(self.position) > 2.)):
             self.history = self.history.append(pd.DataFrame({'particle':[self.id],'hit':[time], 'x':[self.position[0]], 'y':[self.position[1]]}), ignore_index=True)
         pass
 
@@ -35,33 +35,42 @@ class Particle(object):
 
 class Detector(object):
     def __init__(self):
-        self.Nrho = 10
-        self.Nphi = 10
+        self.Nrho = 50
+        self.Nphi = 300
+        self.Npipe = 10
+        self.cells_r = np.array(range(self.Npipe,self.Nrho+self.Npipe)) * 5. / self.Nrho;
+        self.cells_phi = 2.*np.pi*np.array(range(0,self.Nphi))/self.Nphi
+        self.detsize = self.cells_r * 2.*np.pi/self.Nphi
+        self.thickness = 0.01
         self.cells_x = np.zeros((self.Nrho, self.Nphi))
         self.cells_y = np.zeros((self.Nrho, self.Nphi))
+        self.hit_particle = np.zeros((self.Nrho, self.Nphi))
         self.cells_width = np.zeros((self.Nrho, self.Nphi))
         self.cells_hit = np.zeros((self.Nrho, self.Nphi))
-        self.history = pd.DataFrame({'particle':[0],'hit':[0], 'x':[0], 'y':[1]})
+        self.history = pd.DataFrame({'particle':[0],'hit':[0], 'x':[0], 'y':[0]})
         self.history= self.history.drop(self.history.index[[0]])
-        self.detsize = 0.01
 
     def reset(self):
         self.cells_hit = np.zeros((self.Nrho, self.Nphi))
         for irho in range(0, self.Nrho):
             for iphi in range(0,self.Nphi):
-                rho = 20*irho
-                phi = 2.*2.*np.pi*(iphi-self.Nphi/2)/self.Nphi
+                rho = self.cells_r[irho]
+                phi = self.cells_phi[iphi]
                 self.cells_x[irho,iphi] = rho*np.cos(phi)
-                self.cells_y[irho,iphi] = -rho*np.sin(phi)
-                pass
-            pass
-        pass
-        self.history = pd.DataFrame({'hit':[22], 'x':[0.], 'y':[0.]})
+                self.cells_y[irho,iphi] = rho*np.sin(phi)
+        self.history = pd.DataFrame({'particle':[0], 'hit':[0], 'x':[0.], 'y':[0.]})
+        self.history = self.history.drop(self.history.index[[0]])
 
-    def deposit(self,position):
+
+    def deposit(self,position, particle=0):
         for irho in range(0, self.Nrho):
             for iphi in range(0,self.Nphi):
-                if(np.linalg.norm(position - np.array(self.cells_x[irho,iphi],self.cells_y[irho,iphi])) < self.detsize):
+                #                if(np.linalg.norm(position - [self.cells_x[irho,iphi],self.cells_y[irho,iphi],0]) < self.detsize[irho]):
+                if((np.fabs(np.linalg.norm(position) - self.cells_r[irho]) < self.thickness) &
+                   (np.fabs(np.mod((np.arctan2(position[1],position[0])-self.cells_phi[iphi]), 360.)) < self.detsize[irho])):
+
+                    #think about overlap
+                    self.hit_particle[irho,iphi] = particle
                     self.cells_hit[irho,iphi] = 1
         return 0
 
@@ -69,7 +78,7 @@ class Detector(object):
         for irho in range(0, self.Nrho):
             for iphi in range(0,self.Nphi):
                 if(self.cells_hit[irho,iphi] == 1):
-                    self.history = self.history.append(pd.DataFrame({'hit':[time], 'x':self.cells_x[irho,iphi], 'y':self.cells_y[irho,iphi]}), ignore_index=True)
+                    self.history = self.history.append(pd.DataFrame({'particle':self.hit_particle[irho,iphi], 'hit':[0], 'x':self.cells_x[irho,iphi], 'y':self.cells_y[irho,iphi]}), ignore_index=True)
 
         return self.history
 
@@ -93,7 +102,7 @@ class Simulator(object):
         #        print "New planet"
         self.p = Particle(x,v,id)
 
-        for t in range(0,300):
+        for t in range(0,100):
             acceleration = self.force(self.p.position,self.p.momentum)
             self.p.update(acceleration, t, self.detector, stephit = step)
 #            if(t % 10 == 0):
