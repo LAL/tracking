@@ -8,7 +8,7 @@ import Fitting as fit
 if __name__ == '__main__':
     print("Reading file ...")
 
-    fitter = TrackFitter(B=0.04/40)
+    fitter = TrackFitter(B=0.01)
 
     data_track = pd.DataFrame({'event':[0],'track':[0],'pt':[0.], 'phi':[0.], 'xVtx':[0.], 'yVtx':[0.], 'chg':[0.]})
     data_track = data_track.drop(data_track.index[[0]])
