@@ -66,8 +66,11 @@ class Detector(object):
         for irho in range(0, self.Nrho):
             for iphi in range(0,self.Nphi):
                 #                if(np.linalg.norm(position - [self.cells_x[irho,iphi],self.cells_y[irho,iphi],0]) < self.detsize[irho]):
-                if((np.fabs(np.linalg.norm(position) - self.cells_r[irho]) < self.thickness) &
-                   (np.fabs(np.mod((np.arctan2(position[1],position[0])-self.cells_phi[iphi]), 360.)) < self.detsize[irho])):
+                if(
+                   (np.fabs(np.linalg.norm(position) - self.cells_r[irho]) < self.thickness)
+                   &
+                   (np.fabs(np.mod((np.arctan2(position[1],position[0])-self.cells_phi[iphi]), 360.)
+                            ) < 2.*np.pi/self.Nphi)):
 
                     #think about overlap
                     self.hit_particle[irho,iphi] = particle
