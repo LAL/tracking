@@ -24,9 +24,9 @@ class Particle(object):
 
         pass
 
-    def update(self,acceleration, time, detector, stephit = 1):
+    def update(self,acceleration, time, detector, precision, stephit = 1):
         self.momentum += acceleration;
-        self.position += self.momentum;
+        self.position += self.momentum/precision;
 
         deflect = detector.deposit(self.position, self.id)
         if(np.fabs(deflect) > 0) : self.momentum = rotate(self.momentum,deflect)
@@ -60,7 +60,7 @@ class Detector(object):
                  self.cells_x[irho,iphi] = rho*np.cos(phi)
                  self.cells_y[irho,iphi] = rho*np.sin(phi)
 
-        self.thickness = 0.015
+        self.thickness = 0.02
         self.hit_particle = np.zeros((self.Nrho, self.Nphi[0]))
         self.cells_width = np.zeros((self.Nrho, self.Nphi[0]))
         self.cells_hit = np.zeros((self.Nrho, self.Nphi[0]))
@@ -110,12 +110,13 @@ class Simulator(object):
     def __init__(self):
         self.p = Particle([0,0,0], [0,0,0])
         self.detector = Detector()
+        self.precision = 100
 
 
     def force(self,position, momentum):
         #        g = 0.5
         #        acc = -g * position / pow(np.linalg.norm(position),3) # gravitational force
-        b = 0.01
+        b = 1./self.precision
         # This is non relativistic!
         acc = - np.cross(momentum, [0,0,b])
         return acc
@@ -125,9 +126,9 @@ class Simulator(object):
         #        print "New planet"
         self.p = Particle(x,v,id)
 
-        for t in range(0,100):
+        for t in range(0,self.precision):
             acceleration = self.force(self.p.position,self.p.momentum)
-            self.p.update(acceleration, t, self.detector, stephit = step)
+            self.p.update(acceleration, t, self.detector, self.precision, stephit = step)
 #            if(t % 10 == 0):
 #                print t, p.position
 

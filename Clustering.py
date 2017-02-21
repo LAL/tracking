@@ -2,7 +2,7 @@
 from sklearn.base import BaseEstimator
 from sklearn.cluster import DBSCAN
 
-import transform
+import Transform as transform
 
 
 class ClusterDBSCAN(BaseEstimator):

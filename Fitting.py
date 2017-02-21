@@ -17,12 +17,12 @@ class TrackFitter():
         phi0=np.arctan2(y[0],x[0])
         phi1=np.arctan2(seedy,seedx)
         phi=phi1
-        xr,yr=rotate(x,y,-phi)
+        xr,yr=rotateArray(x,y,-phi)
         return xr,yr,phi
 
 
     def fit(x,y):
-        xr,yr,phi=rotateToQuadrant(x,y);
+        xr,yr,phi=self.rotateToQuadrant(x,y);
         p, cov = curve_fit(circular_path, xr, yr,
                            p0=[200.,0.,0.],
                            bounds=([5.,-25.,-25.],

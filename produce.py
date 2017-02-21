@@ -5,10 +5,10 @@ from Simulate import *
 sim = Simulator()
 
 N = 100
-Mmin = 2
-Mmax = 8
+Mmin = 1
+Mmax = 1
 
-data = pd.DataFrame({'event':[0],'particle':[0],'hit':[0], 'x':[0.], 'y':[0.]})
+data = pd.DataFrame({'event':[0],'particle':[0],'hit':[0],'layer':[0], 'x':[0.], 'y':[0.]})
 data = data.drop(data.index[[0]])
 
 data_particle = pd.DataFrame({'event':[0],'particle':[0],'pt':[0.], 'phi':[0.], 'xVtx':[0.], 'yVtx':[0.]})
@@ -17,7 +17,8 @@ data_particle = data_particle.drop(data_particle.index[[0]])
 
 for ievent in range(0,N):
 
-    event = pd.DataFrame({'event':[0],'particle':[0],'hit':[0], 'x':[0.], 'y':[0.]})
+    if(ievent % 1 == 0): print "processing event : ",ievent
+    event = pd.DataFrame({'event':[0],'particle':[0],'hit':[0],'layer':[0], 'x':[0.], 'y':[0.]})
     event = event.drop(event.index[[0]])
 
     event_particle = pd.DataFrame({'event':[0],'particle':[0],'pt':[0.], 'phi':[0.], 'xVtx':[0.], 'yVtx':[0.]})
@@ -28,9 +29,9 @@ for ievent in range(0,N):
     sim.detector.reset()
 
     for p in range(0,M):
-        a = 0.6
-        v = 0.2
-        position = a*(2.*np.random.random(2)-[1.,1.])
+        d = 0.2
+        v = 3.
+        position = d*(2.*np.random.random(2)-[1.,1.])
         velocity = v*(2.*np.random.random(2)-[1.,1.])
 
         pt=np.linalg.norm(velocity)
@@ -53,12 +54,17 @@ for ievent in range(0,N):
                                         )
                               )
 
-    data=data.append(sim.detector.getHits(), ignore_index=True)
+    hits=sim.detector.getHits()
+    data_event=pd.concat(
+                         [pd.DataFrame({'event':[ievent]*len(hits.index)}),
+                          hits],
+                         axis=1
+                         )
 
-#    data=data.append(event, ignore_index=True)
+    data=data.append(data_event, ignore_index=True)
     data_particle=data_particle.append(event_particle, ignore_index=True)
 
-data.to_csv("hits_100.csv",header=True,cols=['event','particle','hit', 'x', 'y'], engine='python')
+data.to_csv("hits_100.csv",header=True,cols=['event','particle','hit','layer', 'x', 'y'], engine='python')
 data_particle.to_csv("particles_100.csv",header=True,cols=['event','particle','pt', 'phi', 'xVtx', 'yVtx'], engine='python')
 
 
