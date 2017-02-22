@@ -3,12 +3,12 @@ import numpy as np
 
 from sklearn.cross_validation import ShuffleSplit
 
-import tracking
-import score_cluster
-import score_physics
-import plotting
+import Tracking
+import Score_cluster
+import Score_physics
+import Plotting
 
-filename = "test.csv"
+filename = "hits_100.csv"
 
 def read_data(filename):
     df = pd.read_csv(filename)
@@ -31,7 +31,7 @@ if __name__ == '__main__':
 #        print train_is
 #        print test_is
 
-        tracker = tracking.ClusterDBSCAN(eps = 0.02)
+        tracker = Tracking.HitToTrackAssignmet(eps = 0.02)
 
         X_train_df = X_df.iloc[train_is].copy()
         y_train_df = y_df.iloc[train_is].copy()
@@ -48,6 +48,6 @@ if __name__ == '__main__':
         tracker.fit(X_train_df.values, y_train_df.values)
 
         y_predicted = tracker.predict(X_test_df.values)
-        score_eff, score_fake = score_cluster.evaluate(y_test_df.values[:,0], y_predicted)
+        score_eff, score_fake = Score_cluster.evaluate(y_test_df.values[:,0], y_predicted)
         print 'score efficiency = ', score_eff
         print 'score fake = ', score_fake
