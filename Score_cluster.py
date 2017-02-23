@@ -5,19 +5,20 @@ import numpy as np
 
 def evaluate(y_test, y_pred, particle = -1):
 
-    eff_total = 0.;
-    fake_total = 0.;
+    eff_total = 0.
+    fake_total = 0.
 
     # evaluate hit efficiency
     listtoscore = [particle]
-    if(particle < 0) : listtoscore = np.unique(y_test)
+    if(particle < 0):
+        listtoscore = np.unique(y_test)
     
-    dummyarray = np.full(shape=len(y_test)+1,fill_value=-1)
+    dummyarray = np.full(shape=len(y_test) + 1,fill_value=-1)
 
     for particle in listtoscore:
         
-        eff = 0.;
-        fake = 0.;
+        eff = 0.
+        fake = 0.
 
 #        print "particle : ", particle
         true_hits = y_test[y_test[:] == particle]
@@ -45,14 +46,13 @@ def evaluate(y_test, y_pred, particle = -1):
             others = (y_test[:] != particle)
             mask = overlap & others
             noise_hits = y_pred[mask]
-            fake = len(noise_hits)/len(true_hits)
+            fake = len(noise_hits) / len(true_hits)
 
 #            print "efficiency : ", eff
 #            print "fake : ", fake
 
-
-        eff_total+=eff
-        fake_total+=fake
+        eff_total += eff
+        fake_total += fake
         
     
     # remove combinatorials

@@ -1,6 +1,6 @@
 import numpy as np
 
-def polar(hits, rscale = 0.0000001):
+def polar(hits, rscale = 0.0001):
     ptsnew = np.zeros(hits.shape)
     xy = hits[:,0]**2 + hits[:,1]**2
     ptsnew[:,0] = np.sqrt(xy)*rscale
@@ -22,6 +22,20 @@ def rotate(momentum, phi):
     yr=s*x+c*y
     
     return [xr,yr,z]
+
+
+
+def rotateArrayToQuadrant(x,y):
+
+    seedx=x[1]-x[0]
+    seedy=y[1]-y[0]
+    phi0=np.arctan2(y[0],x[0])
+    phi1=np.arctan2(seedy,seedx)
+    phi=phi1
+    xr,yr=rotateArray(x,y,-phi)
+    return xr,yr,phi
+
+
 
 def deltaPhiAbs(phi1,phi0):
     dphi = phi1-phi0

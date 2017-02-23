@@ -31,7 +31,7 @@ if __name__ == '__main__':
 #        print train_is
 #        print test_is
 
-        tracker = Tracking.HitToTrackAssignmet(eps = 0.02)
+        tracker = Tracking.ClusterDBSCAN(eps = 0.05)
 
         X_train_df = X_df.iloc[train_is].copy()
         y_train_df = y_df.iloc[train_is].copy()

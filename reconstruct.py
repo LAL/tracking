@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-import Clustering as trk
+import Tracking as trk
 import Fitting as fit
 
 
@@ -40,7 +40,7 @@ if __name__ == '__main__':
         for itrack in np.unique(y_event_predicted):
             xhit = X_df['x'].values[y_event_predicted[:] == itrack]
             yhit = X_df['y'].values[y_event_predicted[:] == itrack]
-            pt,phi,vx,vy=fitter.fit(xhit,yhit)
+            pt,phi,vx,vy,chg=fitter.fit(xhit,yhit)
 
 
     df_result=pd.concat([df_result,pd.DataFrame({'track':y_predicted})],axis=1)
