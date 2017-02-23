@@ -4,11 +4,12 @@ import numpy as np
 from sklearn.cross_validation import ShuffleSplit
 
 import Tracking
+import Score_assignment
 import Score_cluster
 import Score_physics
 import Plotting
 
-filename = "hits_100.csv"
+filename = "hits_10.csv"
 
 def read_data(filename):
     df = pd.read_csv(filename)
@@ -23,15 +24,16 @@ if __name__ == '__main__':
 
     X_df, y_df = read_data(filename)
 
+    #no training, use all sample for test:
     skf = ShuffleSplit(
-    len(y_df), n_iter=1, test_size=0.2, random_state=57)
+    len(y_df), n_iter=1, test_size=0.5, random_state=57)
     print("Training file ...")
     for train_is, test_is in skf:
         print '--------------------------'
 #        print train_is
 #        print test_is
 
-        tracker = Tracking.ClusterDBSCAN(eps = 0.05)
+        tracker = Tracking.ClusterDBSCAN(eps=0.004, rscale=0.001)
 
         X_train_df = X_df.iloc[train_is].copy()
         y_train_df = y_df.iloc[train_is].copy()
@@ -46,8 +48,15 @@ if __name__ == '__main__':
         
 #        print X_train_df
         tracker.fit(X_train_df.values, y_train_df.values)
+        score = 0
+        events = np.unique(X_test_df['event'].values)
+        for ievent in events:
+            event_df = X_test_df.loc[X_test_df['event']==ievent]
+            y_event_df = y_test_df.loc[X_test_df['event']==ievent]
+            y_predicted = tracker.predict(event_df.values)
+            print y_predicted
+            event_score = Score_assignment.evaluate(y_event_df.values[:,0], y_predicted)
+            score += event_score
+        score /= len(events)
+        print 'average score = ', score
 
-        y_predicted = tracker.predict(X_test_df.values)
-        score_eff, score_fake = Score_cluster.evaluate(y_test_df.values[:,0], y_predicted)
-        print 'score efficiency = ', score_eff
-        print 'score fake = ', score_fake

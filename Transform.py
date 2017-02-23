@@ -1,6 +1,6 @@
 import numpy as np
 
-def polar(hits, rscale = 0.0001):
+def polar(hits, rscale = 0.01):
     ptsnew = np.zeros(hits.shape)
     xy = hits[:,0]**2 + hits[:,1]**2
     ptsnew[:,0] = np.sqrt(xy)*rscale
@@ -35,6 +35,15 @@ def rotateArrayToQuadrant(x,y):
     xr,yr=rotateArray(x,y,-phi)
     return xr,yr,phi
 
+def reflect(x,y):
+    chg = 1
+    xr = x
+    yr = y
+    # change to full sum
+    if(y[1]+y[0] < 0):
+        xr = -x
+        yr = -y
+    return xr,yr,chg
 
 
 def deltaPhiAbs(phi1,phi0):

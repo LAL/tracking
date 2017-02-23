@@ -4,9 +4,9 @@ from Simulate import *
 
 sim = Simulator()
 
-N = 100
+N = 10
 Mmin = 1
-Mmax = 1
+Mmax = 10
 
 data = pd.DataFrame({'event':[0],'particle':[0],'hit':[0],'layer':[0], 'x':[0.], 'y':[0.]})
 data = data.drop(data.index[[0]])
@@ -64,7 +64,7 @@ for ievent in range(0,N):
     data=data.append(data_event, ignore_index=True)
     data_particle=data_particle.append(event_particle, ignore_index=True)
 
-data.to_csv("hits_100.csv",header=True,cols=['event','particle','hit','layer', 'x', 'y'], engine='python')
+data.to_csv("hits_10.csv",header=True,cols=['event','particle','hit','layer', 'x', 'y'], engine='python')
 data_particle.to_csv("particles_100.csv",header=True,cols=['event','particle','pt', 'phi', 'xVtx', 'yVtx'], engine='python')
 
 

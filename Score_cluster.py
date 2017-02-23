@@ -57,7 +57,7 @@ def evaluate(y_test, y_pred, particle = -1):
     
     # remove combinatorials
     
-    return eff, fake
+    return eff_total, fake_total
 
 
 

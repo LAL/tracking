@@ -77,7 +77,7 @@ class Detector(object):
         self.history = self.history.drop(self.history.index[[0]])
 
 
-    def deposit(self,position, particle=0):
+    def deposit(self,position, particle):
         deflect=0.
         for irho in range(0, self.Nrho):
             for iphi in range(0,self.Nphi[irho]):

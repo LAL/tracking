@@ -12,7 +12,10 @@ class TrackFitter():
         pass
     
     def fit(self,x,y):
-        xr,yr,phi=rotateArrayToQuadrant(x,y);
+        if(len(x) < 2) :
+            return 0,0,0,0,0
+        xr,yr,phi=rotateArrayToQuadrant(x,y)
+        xr,yr,chg = reflect(xr,yr)
         p, cov = curve_fit(circular_path, xr, yr,
                            p0=[200.,0.,0.],
                            bounds=([5.,-25.,-25.],
@@ -24,7 +27,6 @@ class TrackFitter():
         pt = self.B*r
         vx = p[1]
         vy = p[2]
-        chg = 1
         return  pt,phi,vx,vy,chg
 
 
