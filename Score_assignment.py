@@ -1,12 +1,10 @@
 import numpy as np
-# import pandas as pd
-
 
 
 def evaluate(y_test, y_pred):
 
     eff_total = 0.
-    fake_total = 0.
+    #    fake_total = 0.
 
     particles = np.unique(y_test)
     npart = len(particles)
@@ -25,21 +23,12 @@ def evaluate(y_test, y_pred):
         eff[ipart] = 0.
         con[ipart] = 0.
 
-#        print "particle : ", particle
         true_hits = y_test[y_test[:] == particle]
         found_hits = y_pred[y_test[:] == particle]
 
         nsubcluster=len(np.unique(found_hits[found_hits[:] >= 0]))
 
-#        if(particle >= 0):
-            #            print "true hits : ", true_hits
-            #            print "found hits : ", found_hits
-            #            print "found clusters : ", nsubcluster
-
-
         if(nsubcluster > 0):
-            # fix for degeneracy?
-
             b=np.bincount(found_hits[found_hits[:] >= 0])
             a=np.argmax(b)
 
@@ -48,17 +37,14 @@ def evaluate(y_test, y_pred):
             assignedtrack[ipart]=maxcluster
             hitintrack[ipart]=len(found_hits[found_hits[:] == maxcluster])
 
-            eff[ipart] = hitintrack[ipart]/len(true_hits)
+            #           eff[ipart] = hitintrack[ipart]/len(true_hits)
 
             # evaluate contamination
-            overlap = (y_pred[:] == maxcluster)
-            others = (y_test[:] != particle)
-            mask = overlap & others
-            noise_hits = y_pred[mask]
-            con[ipart] = len(noise_hits) / len(true_hits)
-
-#            print "efficiency : ", eff
-#            print "fake : ", fake
+            #            overlap = (y_pred[:] == maxcluster)
+            #            others = (y_test[:] != particle)
+            #            mask = overlap & others
+            #            noise_hits = y_pred[mask]
+            #            con[ipart] = len(noise_hits) / len(true_hits)
 
         ipart += 1
 
