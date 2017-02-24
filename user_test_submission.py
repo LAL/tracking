@@ -13,7 +13,7 @@ filename = "hits_10.csv"
 def read_data(filename):
     df = pd.read_csv(filename)
     y_df = df[['particle']] + 1000 * df[['event']].values
-    X_df = df.drop(['hit','particle'], axis=1)
+    X_df = df.drop(['hit','particle','Unnamed: 0'], axis=1)
     return X_df, y_df
 
 
@@ -45,7 +45,8 @@ if __name__ == '__main__':
         
         tracker.fit(X_train_df.values, y_train_df.values)
         y_predicted = tracker.predict(X_test_df.values)
-        #      print len(X_test_df.values), len(y_predicted)
+
+        # Score the result
         total_score = 0.
         events = np.unique(X_test_df['event'].values)
         for ievent in events:
