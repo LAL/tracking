@@ -4,7 +4,7 @@ from Simulate import *
 
 sim = Simulator()
 
-N = 100
+N = 1000
 Mmin = 1
 Mmax = 1
 
@@ -14,7 +14,7 @@ data = data.drop(data.index[[0]])
 data_particle = pd.DataFrame({'event':[0],'particle':[0],'pt':[0.], 'phi':[0.], 'xVtx':[0.], 'yVtx':[0.]})
 data_particle = data_particle.drop(data_particle.index[[0]])
 
-
+print "Will now produce ",N," events with ",Mmax, " tracks"
 for ievent in range(0,N):
 
     if(ievent % 1 == 0): print "processing event : ",ievent
@@ -39,7 +39,8 @@ for ievent in range(0,N):
         xVtx=position[0]
         yVtx=position[1]
 
-        simtrack=sim.propagate(position,velocity, step = 20, id=p)
+        #DR simtrack=sim.propagate(position,velocity, step = 20, id=p)
+        simtrack=sim.propagate_direct(position,velocity, id=p)
         simtrack = pd.concat(
                              [pd.DataFrame({'event':[ievent]*len(simtrack.index)}),
                               simtrack],
