@@ -136,7 +136,6 @@ class Detector(object):
         self.cells_hit = np.zeros((self.Nrho, np.max(self.Nphi)))
         self.history = pd.DataFrame({'particle':[0], 'hit':[0], 'layer':[0], 'x':[0.], 'y':[0.]})
         self.history = self.history.drop(self.history.index[[0]])
-        np.random.seed(self.seed)
 
 
     def deposit(self,position, particle=0):
