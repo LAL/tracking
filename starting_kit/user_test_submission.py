@@ -13,7 +13,7 @@ def read_data(filename):
     X_df = df.drop(['hit','particle'], axis=1)
     return X_df, y_df
 
-def evaluate(y_test, y_pred):
+def score(y_test, y_pred):
     
     eff_total = 0.
     #    fake_total = 0.
@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
         # tracker = Tracking.ClusterDBSCAN(eps=0.004, rscale=0.001)
         # use dummy clustering
-        tracker = Tracking.HitToTrackAssignmet()
+        tracker = Tracking.HitToTrackAssignment()
 
         X_train_df = X_df.iloc[train_is].copy()
         y_train_df = y_df.iloc[train_is].copy()
@@ -110,7 +110,7 @@ if __name__ == '__main__':
             y_event_df = y_test_df.loc[X_test_df['event']==ievent]
             y_predicted = tracker.predict(event_df.values)
             print y_predicted
-            event_score = evaluate(y_event_df.values[:,0], y_predicted)
+            event_score = score(y_event_df.values[:,0], y_predicted)
             score += event_score
         score /= len(events)
         print 'average score = ', score
