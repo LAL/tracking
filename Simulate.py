@@ -87,13 +87,16 @@ class Particle(object):
 
 class Detector(object):
     def __init__(self):
-        self.Nrho = 12
-        self.Nphi = [180] * self.Nrho
-        #FIXME self.Nphi = [10000] * self.Nrho
+        self.Nrho = 9
+        #self.Nphi = [180] * self.Nrho
+        self.Nphi = [10000] * self.Nrho
         self.Npipe = 2
         self.range = 5.
         self.sigmaMS = 0.05 # should depend of momentum
-        self.cells_r = np.array(range(self.Npipe,self.Nrho+self.Npipe)) * self.range / self.Nrho;
+        #from ATLAS  (https://cds.cern.ch/record/2239573 atlas restricted unfortunately) section 2.4 Table 1 and 4.
+        # 4 layers of pixel at radii (in mm) 39 85 155 213 271 and 5 strip layers : 405 562 762 1000
+        #self.cells_r = np.array(range(self.Npipe,self.Nrho+self.Npipe)) * self.range / self.Nrho;
+        self.cells_r = np.array([39,85,155,213,271,405,562,762,1000])
         self.cells_phi = np.zeros((self.Nrho, np.max(self.Nphi)))
         self.cells_x = np.zeros((self.Nrho, np.max(self.Nphi)))
         self.cells_y = np.zeros((self.Nrho, np.max(self.Nphi)))
@@ -161,7 +164,7 @@ class Simulator(object):
         self.p = Particle([0,0,0], [0,0,0])
         self.detector = Detector()
         self.precision = 100
-        self.bmag=5.
+        self.bmag=1./0.3 #ATLAS R(mm)=PT(MeV)/0.3 CMS PT/0.6
         self.hitid=0 # hit counter
 
 
@@ -188,7 +191,7 @@ class Simulator(object):
 
     def propagate_direct(self,x=[], v=[], irhostart=-1, id = 0):
         
-        debug=False
+        debug=True
         self.p = Particle(x,v,id,irhostart)
         if debug: print self.p
         
