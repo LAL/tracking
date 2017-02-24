@@ -4,13 +4,15 @@ import numpy as np
 from sklearn.cross_validation import ShuffleSplit
 
 import Tracking
-import Score_assignment
+
+from Score_assignment import *
+
 
 filename = "hits_10.csv"
 
 def read_data(filename):
     df = pd.read_csv(filename)
-    y_df = df[['particle']]
+    y_df = df[['particle']] + 1000 * df[['event']].values
     X_df = df.drop(['hit','particle'], axis=1)
     return X_df, y_df
 
@@ -30,7 +32,7 @@ if __name__ == '__main__':
 
         # tracker = Tracking.ClusterDBSCAN(eps=0.004, rscale=0.001)
         # use dummy clustering
-        tracker = Tracking.HitToTrackAssignmet()
+        tracker = Tracking.HitToTrackAssignment()
 
         X_train_df = X_df.iloc[train_is].copy()
         y_train_df = y_df.iloc[train_is].copy()
@@ -42,15 +44,17 @@ if __name__ == '__main__':
         y_test_df = y_df.copy()
         
         tracker.fit(X_train_df.values, y_train_df.values)
-        score = 0
+        y_predicted = tracker.predict(X_test_df.values)
+        #      print len(X_test_df.values), len(y_predicted)
+        total_score = 0.
         events = np.unique(X_test_df['event'].values)
         for ievent in events:
-            event_df = X_test_df.loc[X_test_df['event']==ievent]
-            y_event_df = y_test_df.loc[X_test_df['event']==ievent]
-            y_predicted = tracker.predict(event_df.values)
-            print y_predicted
-            event_score = Score_assignment.evaluate(y_event_df.values[:,0], y_predicted)
-            score += event_score
-        score /= len(events)
-        print 'average score = ', score
+            event_indices=(X_test_df['event']==ievent).values
+            y_event_df = y_test_df.loc[event_indices]
+            y_predicted_event = y_predicted[event_indices]
+            #          print y_predicted_event
+            event_score = score(y_event_df.values[:,0], y_predicted_event)
+            total_score += event_score
+        total_score /= len(events)
+        print 'average score = ', total_score
 

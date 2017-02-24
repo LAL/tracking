@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def evaluate(y_test, y_pred):
+def score(y_test, y_pred):
 
     eff_total = 0.
     #    fake_total = 0.

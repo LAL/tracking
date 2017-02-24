@@ -2,7 +2,7 @@
 from sklearn.base import BaseEstimator
 from sklearn.cluster import DBSCAN
 
-class HitToTrackAssignmet(BaseEstimator):
+class HitToTrackAssignment(BaseEstimator):
     def __init__(self, eps = 0.02):
         self.eps = eps
         self.min_hits = 3
