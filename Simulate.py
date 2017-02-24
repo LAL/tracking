@@ -61,6 +61,7 @@ class Particle(object):
         self.iphi=iphi # layer index, -1 if origin
         self.momentum[0] = vx[0]
         self.momentum[1] = vx[1]
+        self.magmom=np.linalg.norm(self.momentum)
         self.traceMin = 0.1
     
         self.history = pd.DataFrame({'particle':[self.id],'hit':[0], 'layer':irho, 'x':self.position[0], 'y':self.position[1]})
@@ -92,7 +93,7 @@ class Detector(object):
         self.Nphi = [10000] * self.Nrho
         self.Npipe = 2
         self.range = 5.
-        self.sigmaMS = 0.05 # should depend of momentum
+        self.sigmaMS = 13.6*math.sqrt(0.02) # to be divided by P (in MeV)
         #from ATLAS  (https://cds.cern.ch/record/2239573 atlas restricted unfortunately) section 2.4 Table 1 and 4.
         # 4 layers of pixel at radii (in mm) 39 85 155 213 271 and 5 strip layers : 405 562 762 1000
         #self.cells_r = np.array(range(self.Npipe,self.Nrho+self.Npipe)) * self.range / self.Nrho;
@@ -144,7 +145,7 @@ class Detector(object):
                     #think about overlap
                     self.hit_particle[irho,iphi] = particle
                     self.cells_hit[irho,iphi] = 1
-                    deflect = np.random.normal(0.,self.sigmaMS) #multiple scattering
+                    deflect = np.random.normal(0.,self.sigmaMS/1000) #multiple scattering, should divide by particle momentumdebug=Tru
         return deflect
 
     def getHits(self):
@@ -191,7 +192,7 @@ class Simulator(object):
 
     def propagate_direct(self,x=[], v=[], irhostart=-1, id = 0):
         
-        debug=True
+        debug=False
         self.p = Particle(x,v,id,irhostart)
         if debug: print self.p
         
@@ -223,17 +224,19 @@ class Simulator(object):
 
             deltaphimom=2*(phichange-math.atan2(self.p.momentum[1],self.p.momentum[0])) # rotation of momentum vector
             # insert MS there
-            deflect = np.random.normal(0.,self.detector.sigmaMS)
+            newmomentum=np.copy(self.p.momentum)
+            newmagmom=np.linalg.norm(self.p.momentum)
+            deflect = np.random.normal(0.,self.detector.sigmaMS/newmagmom)
 
 
             #now rotate momentum vector
-            newmomentum=np.copy(self.p.momentum)
             rotate_vector(newmomentum,deltaphimom+deflect)
             
                                                                         
             # update particle internal state
             self.p.position=newposition
             self.p.momentum=newmomentum
+            self.p.magmom=newmagmom
             self.p.layer=irho
             
             
