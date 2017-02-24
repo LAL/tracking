@@ -87,7 +87,9 @@ class Particle(object):
               
 
 class Detector(object):
-    def __init__(self):
+    def __init__(self,seed=1234):
+        self.seed=seed
+        np.random.seed(self.seed)
         self.Nrho = 9
         self.Npipe = 2
         self.range = 5.
@@ -105,7 +107,7 @@ class Detector(object):
                 pitch=0.050 # pitch strip (divided by sqrt(2) given double layer)
             
             self.Nphi += [int(self.cells_r[i]*2*math.pi/pitch)+1]
-        print self.Nphi
+        # print self.Nphi
 
         self.cells_phi = np.zeros((self.Nrho, np.max(self.Nphi)))
         self.cells_x = np.zeros((self.Nrho, np.max(self.Nphi)))
@@ -134,6 +136,7 @@ class Detector(object):
         self.cells_hit = np.zeros((self.Nrho, np.max(self.Nphi)))
         self.history = pd.DataFrame({'particle':[0], 'hit':[0], 'layer':[0], 'x':[0.], 'y':[0.]})
         self.history = self.history.drop(self.history.index[[0]])
+        np.random.seed(self.seed)
 
 
     def deposit(self,position, particle=0):
