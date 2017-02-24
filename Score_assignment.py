@@ -4,7 +4,6 @@ import numpy as np
 def score(y_test, y_pred):
 
     eff_total = 0.
-    #    fake_total = 0.
 
     particles = np.unique(y_test)
     npart = len(particles)
@@ -29,7 +28,8 @@ def score(y_test, y_pred):
         nsubcluster=len(np.unique(found_hits[found_hits[:] >= 0]))
 
         if(nsubcluster > 0):
-            b=np.bincount(found_hits[found_hits[:] >= 0])
+            print found_hits[found_hits[:] >= 0]
+            b=np.bincount((found_hits[found_hits[:] >= 0]).astype(dtype='int64'))
             a=np.argmax(b)
 
             maxcluster = a

@@ -1,4 +1,5 @@
 
+import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.cluster import DBSCAN
 
@@ -12,5 +13,11 @@ class HitToTrackAssignment(BaseEstimator):
         self.cls.fit(X,y)
 
     def predict(self, X):
-        return self.cls.fit_predict(X)
+        y = np.array([])
+        events=np.unique(X[:,0])
+        for ievent in events:
+            X_event = X[X[:,0] == ievent]
+            y_event = self.cls.fit_predict(X_event)
+            y = np.append(y,y_event)
+        return y
 

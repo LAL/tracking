@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.cross_validation import ShuffleSplit
 
 import Tracking
+import Clustering
 
 from Score_assignment import *
 
@@ -30,9 +31,9 @@ if __name__ == '__main__':
     for train_is, test_is in skf:
         print '--------------------------'
 
-        # tracker = Tracking.ClusterDBSCAN(eps=0.004, rscale=0.001)
         # use dummy clustering
-        tracker = Tracking.HitToTrackAssignment()
+        #tracker = Tracking.HitToTrackAssignment()
+        tracker = Clustering.ClusterDBSCAN(eps=0.5, rscale=0.001)
 
         X_train_df = X_df.iloc[train_is].copy()
         y_train_df = y_df.iloc[train_is].copy()
@@ -53,9 +54,15 @@ if __name__ == '__main__':
             event_indices=(X_test_df['event']==ievent).values
             y_event_df = y_test_df.loc[event_indices]
             y_predicted_event = y_predicted[event_indices]
-            #          print y_predicted_event
+            print "----------------------"
+            print y_event_df.values[:,0]
+            print "----------------------"
+
+            print y_predicted_event
+            print "----------------------"
             event_score = score(y_event_df.values[:,0], y_predicted_event)
             total_score += event_score
+
         total_score /= len(events)
         print 'average score = ', total_score
 

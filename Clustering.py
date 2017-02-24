@@ -1,3 +1,4 @@
+import numpy as np
 
 from sklearn.base import BaseEstimator
 from sklearn.cluster import DBSCAN
@@ -13,12 +14,16 @@ class ClusterDBSCAN(BaseEstimator):
         self.cls = DBSCAN(eps=self.eps, min_samples=self.min_hits)
     
     def fit(self, X, y):
-        X=transform.polar(X, self.rscale)
-        #        print X
+        X = transform.polar(X, self.rscale)
         self.cls.fit(X,y)
 
     def predict(self, X):
-        X=transform.polar(X, self.rscale)
-        #        print X
-        return self.cls.fit_predict(X)
+        y = np.array([])
+        events=np.unique(X[:,0])
+        for ievent in events:
+            X_event = X[X[:,0] == ievent]
+            X_event = transform.polar(X_event, self.rscale)
+            y_event = self.cls.fit_predict(X_event)
+            y = np.append(y,y_event)
+        return y
 
