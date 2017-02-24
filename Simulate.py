@@ -89,8 +89,6 @@ class Particle(object):
 class Detector(object):
     def __init__(self):
         self.Nrho = 9
-        #self.Nphi = [180] * self.Nrho
-        self.Nphi = [10000] * self.Nrho
         self.Npipe = 2
         self.range = 5.
         self.sigmaMS = 13.6*math.sqrt(0.02) # to be divided by P (in MeV)
@@ -98,6 +96,17 @@ class Detector(object):
         # 4 layers of pixel at radii (in mm) 39 85 155 213 271 and 5 strip layers : 405 562 762 1000
         #self.cells_r = np.array(range(self.Npipe,self.Nrho+self.Npipe)) * self.range / self.Nrho;
         self.cells_r = np.array([39,85,155,213,271,405,562,762,1000])
+        #self.Nphi = [180] * self.Nrho
+        self.Nphi=[]
+        for i in range(self.Nrho):
+            if i<5:
+                pitch=0.025 # pitch pixel
+            else:
+                pitch=0.050 # pitch strip (divided by sqrt(2) given double layer)
+            
+            self.Nphi += [int(self.cells_r[i]*2*math.pi/pitch)+1]
+        print self.Nphi
+
         self.cells_phi = np.zeros((self.Nrho, np.max(self.Nphi)))
         self.cells_x = np.zeros((self.Nrho, np.max(self.Nphi)))
         self.cells_y = np.zeros((self.Nrho, np.max(self.Nphi)))
@@ -106,7 +115,7 @@ class Detector(object):
 
         for irho in range(0, self.Nrho):
              self.dphi[irho] = 2.*np.pi / self.Nphi[irho]
-             self.detsize = self.cells_r[irho] * 2.*np.pi/self.Nphi[irho]
+             self.detsize[irho] = self.cells_r[irho] * 2.*np.pi/self.Nphi[irho]
              for iphi in range(0,self.Nphi[irho]):
                  self.cells_phi[irho,iphi] = 2.*np.pi*iphi/self.Nphi[irho]
                  rho = self.cells_r[irho]
@@ -115,18 +124,14 @@ class Detector(object):
                  self.cells_y[irho,iphi] = rho*np.sin(phi)
 
         self.thickness = 0.02
-        self.hit_particle = np.zeros((self.Nrho, self.Nphi[0]))
-        self.cells_width = np.zeros((self.Nrho, self.Nphi[0]))
-        self.cells_hit = np.zeros((self.Nrho, self.Nphi[0]))
+        self.hit_particle = np.zeros((self.Nrho, np.max(self.Nphi)))
+        self.cells_width = np.zeros((self.Nrho, np.max(self.Nphi)))
+        self.cells_hit = np.zeros((self.Nrho, np.max(self.Nphi)))
         self.history = pd.DataFrame({'particle':[0],'hit':[0], 'layer':[0], 'x':[0], 'y':[0]})
         self.history= self.history.drop(self.history.index[[0]])
 
     def reset(self):
-        self.cells_hit = np.zeros((self.Nrho, self.Nphi[0]))
-        for irho in range(0, self.Nrho):
-            for iphi in range(0,self.Nphi[0]):
-                rho = self.cells_r[irho]
-                phi = self.cells_phi[irho,iphi]
+        self.cells_hit = np.zeros((self.Nrho, np.max(self.Nphi)))
         self.history = pd.DataFrame({'particle':[0], 'hit':[0], 'layer':[0], 'x':[0.], 'y':[0.]})
         self.history = self.history.drop(self.history.index[[0]])
 
@@ -145,13 +150,13 @@ class Detector(object):
                     #think about overlap
                     self.hit_particle[irho,iphi] = particle
                     self.cells_hit[irho,iphi] = 1
-                    deflect = np.random.normal(0.,self.sigmaMS/1000) #multiple scattering, should divide by particle momentumdebug=Tru
+                    deflect = np.random.normal(0.,self.sigmaMS/1000) #multiple scattering, should divide by particle momentum
         return deflect
 
     def getHits(self):
         ihit=0
         for irho in range(0, self.Nrho):
-            for iphi in range(0,self.Nphi[0]):
+            for iphi in range(0,self.Nphi[irho]):
                 if(self.cells_hit[irho,iphi] == 1):
                     self.history = self.history.append(pd.DataFrame({'particle':self.hit_particle[irho,iphi], 'hit':[ihit], 'layer':[irho], 'x':self.cells_x[irho,iphi], 'y':self.cells_y[irho,iphi]}), ignore_index=True)
                     ihit+=1
@@ -212,7 +217,7 @@ class Simulator(object):
             nextrhocenter=np.zeros(3)
             #could be done more efficiently
             vintersect=circ_intersect(rotcenter, nextrhocenter, radius, nextrho)
-            if debug:print "vintersect= ", vintersect
+            if debug:print "nextrho= ",nextrho," vintersect= ", vintersect
 
             if len(vintersect)==0:
                 break
@@ -251,7 +256,6 @@ class Simulator(object):
             self.detector.hit_particle[irho,iphi] = id
             self.detector.cells_hit[irho,iphi] = 1
             
-
             self.hitid+=1
             if debug : print self.p
   
