@@ -4,7 +4,7 @@ from Simulate import *
 
 sim = Simulator()
 
-N = 1000
+N = 100
 Mmin = 1
 Mmax = 1
 
@@ -29,18 +29,17 @@ for ievent in range(0,N):
     sim.detector.reset()
 
     for p in range(0,M):
-        d = 0.2
+        d = 2./3 # d0 spead as in atlas hl lhc study
         v = 3.
-        position = d*(2.*np.random.random(2)-[1.,1.])
-        velocity = v*(2.*np.random.random(2)-[1.,1.])
-
-        pt=np.linalg.norm(velocity)
-        phi=np.arctan2(velocity[1],velocity[0])
+        position = np.array([np.random.normal(0.,d),np.random.normal(0.,d)])
+        pt=np.random.uniform(300,10000)
+        phi=np.random.uniform(-np.pi,np.pi)
+        momentum=np.array([pt*np.cos(phi),pt*np.sin(phi)])
         xVtx=position[0]
         yVtx=position[1]
 
         #DR simtrack=sim.propagate(position,velocity, step = 20, id=p)
-        simtrack=sim.propagate_direct(position,velocity, id=p)
+        simtrack=sim.propagate_direct(position,momentum, id=p)
         simtrack = pd.concat(
                              [pd.DataFrame({'event':[ievent]*len(simtrack.index)}),
                               simtrack],
