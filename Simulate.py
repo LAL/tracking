@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 from Transform import *
 import math
 
+#TODO : inefficient if small pitch, probably the hit retrieving phase. Also do not need both track array and hit
+
+
 #from yetkin rotate 2D vector in place
 def rotate_vector(v, deltaphi):
     c, s = math.cos(deltaphi), math.sin(deltaphi)
@@ -49,11 +52,12 @@ def to02pi(x): # map [-pi,pi] to [0,2pi]
 
 class Particle(object):
 
-    def __init__(self, x = [], vx = [], id = 0, irho=-1,iphi=-1):
+    def __init__(self, x = [], vx = [], charge=0,id = 0, irho=-1,iphi=-1):
 
         self.history = pd.DataFrame()
         self.position = np.zeros(3);
         self.momentum = np.zeros(3);
+        self.charge=charge
         self.id = id
         self.position[0] = x[0]
         self.position[1] = x[1]
@@ -83,17 +87,19 @@ class Particle(object):
 
 
     def __str__(self):
-         return "Particle id=%s at layer %s iphi %s (x,y)=(%s,%s) (px,py)=(%s,%s)" %(self.id,self.layer,self.iphi,self.position[0],self.position[1],self.momentum[0],self.momentum[1])
+         return "Particle id=%s at layer %s iphi %s (x,y)=(%s,%s) (px,py)=(%s,%s) ch=%s" %(self.id,self.layer,self.iphi,self.position[0],self.position[1],self.momentum[0],self.momentum[1],self.charge)
               
 
 class Detector(object):
     def __init__(self,seed=1234):
         self.seed=seed
         np.random.seed(self.seed)
+        self.inefficiency=0.03  # probability for a hit to not be recorded
+        self.stoppingprobability=0.01 #probability for a track to stop (each layer)
         self.Nrho = 9
         self.Npipe = 2
         self.range = 5.
-        self.sigmaMS = 13.6*math.sqrt(0.02) # to be divided by P (in MeV)
+        self.sigmaMS = 13.6*math.sqrt(0.02) #FIXME to be divided by P (in MeV)
         #from ATLAS  (https://cds.cern.ch/record/2239573 atlas restricted unfortunately) section 2.4 Table 1 and 4.
         # 4 layers of pixel at radii (in mm) 39 85 155 213 271 and 5 strip layers : 405 562 762 1000
         #self.cells_r = np.array(range(self.Npipe,self.Nrho+self.Npipe)) * self.range / self.Nrho;
@@ -185,7 +191,7 @@ class Simulator(object):
         return acc
 
 
-    def propagate(self,x=[], v=[], step = 1, id = 0):
+    def propagate_numeric(self,x=[], v=[], step = 1, id = 0):
         #        print "New planet"
         self.p = Particle(x,v,id)
 
@@ -197,10 +203,14 @@ class Simulator(object):
 
         return self.p.history
 
-    def propagate_direct(self,x=[], v=[], irhostart=-1, id = 0):
+    def propagate(self,x=[], v=[],charge=1,irhostart=-1 ,id = 0):
         
         debug=False
-        self.p = Particle(x,v,id,irhostart)
+        self.p = Particle(x,v,int(charge),id,irhostart)
+        if abs(self.p.charge)!=1:
+            print "Detector::propagate abs(charge)!=1 not possible !",charge
+            exit() # very brutal
+
         if debug: print self.p
         
         for irho in range(self.p.layer+1,self.detector.Nrho):
@@ -208,7 +218,7 @@ class Simulator(object):
             # this can certainly be improved to reduce angles calculation
             
             # coordinates of the center of rotation
-            tocenter = - np.cross(self.p.momentum, [0,0,self.bmag]) # vector from position to center of rotation
+            tocenter = - charge*np.cross(self.p.momentum, [0,0,self.bmag]) # vector from position to center of rotation
             radius=np.linalg.norm(tocenter)
             if debug : print "tocenter=",tocenter," radius=",radius
 
@@ -223,8 +233,11 @@ class Simulator(object):
 
             if len(vintersect)==0:
                 break
-
-            newposition=vintersect[1] #FIXME,  first or second
+            if self.p.charge==1:
+                newposition=vintersect[1] #FIXME,  first or second
+            else:
+                newposition=vintersect[0] #FIXME,  first or second
+            
             newphipos=math.atan2(newposition[1],newposition[0])
             poschange=newposition-self.p.position
             phichange=math.atan2(poschange[1],poschange[0])
@@ -252,16 +265,29 @@ class Simulator(object):
             if debug: print "newphipos=",newphipos,"iphi=",iphi,"cell phi",self.detector.cells_phi[irho,iphi]
             
             self.p.iphi=iphi
-            self.p.history = self.p.history.append(pd.DataFrame({'particle':[self.p.id],'hit':[self.hitid], 'layer':[self.p.layer], 'x':[self.p.position[0]], 'y':[self.p.position[1]]}), ignore_index=True)
-            
-            #think about overlap
-            self.detector.hit_particle[irho,iphi] = id
-            self.detector.cells_hit[irho,iphi] = 1
-            
-            self.hitid+=1
+
+
+
+            #if inefficient do not record the hit
+            rnd=np.random.random()
+            if rnd   >self.detector.inefficiency:
+                self.p.history = self.p.history.append(pd.DataFrame({'particle':[self.p.id],'hit':[self.hitid], 'layer':[self.p.layer], 'x':[self.p.position[0]], 'y':[self.p.position[1]]}), ignore_index=True)
+                
+                #have to think about overlap
+                self.detector.hit_particle[irho,iphi] = id
+                self.detector.cells_hit[irho,iphi] = 1
+                
+                self.hitid+=1
+
+
+
             if debug : print self.p
-  
-  
+
+            #if track stop, stop here
+            rnd=np.random.random()
+            if rnd<self.detector.stoppingprobability:
+                break
+
         return self.p.history
 
 
