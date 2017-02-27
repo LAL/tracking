@@ -4,9 +4,10 @@ from Simulate import *
 
 sim = Simulator()
 
-N = 10
+N = 20
 Mmin = 1
-Mmax = 10
+Mmax = 1
+nperevent=10
 
 data = pd.DataFrame({'event':[0],'particle':[0],'hit':[0],'layer':[0], 'x':[0.], 'y':[0.]})
 data = data.drop(data.index[[0]])
@@ -14,7 +15,7 @@ data = data.drop(data.index[[0]])
 data_particle = pd.DataFrame({'event':[0],'particle':[0],'pt':[0.], 'phi':[0.], 'xVtx':[0.], 'yVtx':[0.]})
 data_particle = data_particle.drop(data_particle.index[[0]])
 
-
+print "Will now produce ",N," events with in average",nperevent, " tracks"
 for ievent in range(0,N):
 
     if(ievent % 1 == 0): print "processing event : ",ievent
@@ -25,21 +26,27 @@ for ievent in range(0,N):
     event_particle = event_particle.drop(event_particle.index[[0]])
 
 
-    M = np.random.random_integers(Mmin,Mmax)
+    #M = np.random.random_integers(Mmin,Mmax)
+    #poisson distribution, excluding zero
+    M=0
+    while M==0:
+        M = np.random.poisson(nperevent)
+
     sim.detector.reset()
 
-    for p in range(0,M):
-        d = 0.2
+    for p in range(0,M): # generate M tracks
+        d = 2./3 # d0 spread as in atlas hl lhc study
         v = 3.
-        position = d*(2.*np.random.random(2)-[1.,1.])
-        velocity = v*(2.*np.random.random(2)-[1.,1.])
-
-        pt=np.linalg.norm(velocity)
-        phi=np.arctan2(velocity[1],velocity[0])
+        position = np.array([np.random.normal(0.,d),np.random.normal(0.,d)])
+        pt=np.random.uniform(300,10000)
+        phi=np.random.uniform(-np.pi,np.pi)
+        momentum=np.array([pt*np.cos(phi),pt*np.sin(phi)])
         xVtx=position[0]
         yVtx=position[1]
+        charge=2*np.random.random_integers(0,1)-1
 
-        simtrack=sim.propagate(position,velocity, step = 20, id=p)
+        #DR simtrack=sim.propagate(position,velocity, step = 20, id=p)
+        simtrack=sim.propagate(position,momentum, charge=charge,id=p)
         simtrack = pd.concat(
                              [pd.DataFrame({'event':[ievent]*len(simtrack.index)}),
                               simtrack],
@@ -49,7 +56,7 @@ for ievent in range(0,N):
 
         event_particle=event_particle.append(pd.concat(
                                         [pd.DataFrame({'event':[ievent],'particle':[p],
-                                                      'pt':[pt],'phi':[phi],
+                                                      'pt':[charge*pt],'phi':[phi],
                                                       'xVtx':[xVtx],'yVtx':[yVtx]})]
                                         )
                               )
@@ -64,8 +71,9 @@ for ievent in range(0,N):
     data=data.append(data_event, ignore_index=True)
     data_particle=data_particle.append(event_particle, ignore_index=True)
 
-data.to_csv("hits_10.csv",header=True,cols=['event','particle','hit','layer', 'x', 'y'], engine='python')
-data_particle.to_csv("particles_100.csv",header=True,cols=['event','particle','pt', 'phi', 'xVtx', 'yVtx'], engine='python')
+# precision could probably be reduced
+data.to_csv("hits_100.csv",header=True,cols=['event','particle','hit','layer', 'x', 'y'], engine='python')
+data_particle.to_csv("particles_100.csv",header=True,cols=['event','particle','ch_pt', 'phi', 'xVtx', 'yVtx'], engine='python')
 
 
 
