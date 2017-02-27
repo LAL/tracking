@@ -9,12 +9,12 @@ import Clustering
 from Score_assignment import *
 
 
-filename = "hits_10.csv"
+filename = "hits_10000.csv"
 
 def read_data(filename):
     df = pd.read_csv(filename)
     y_df = df[['particle']] + 1000 * df[['event']].values
-    X_df = df.drop(['hit','particle','Unnamed: 0'], axis=1)
+    X_df = df.drop(['hit','particle'], axis=1)
     return X_df, y_df
 
 

@@ -68,7 +68,7 @@ class Particle(object):
         self.magmom=np.linalg.norm(self.momentum)
         self.traceMin = 0.1
     
-        self.history = pd.DataFrame({'particle':[self.id],'hit':[0], 'layer':irho, 'x':self.position[0], 'y':self.position[1]})
+        self.history = pd.DataFrame({'particle':[self.id],'hit':[0], 'layer':irho, 'iphi':iphi, 'x':self.position[0], 'y':self.position[1]})
         self.history= self.history.drop(self.history.index[[0]])
         #        print self.history
 
@@ -81,7 +81,7 @@ class Particle(object):
         deflect = detector.deposit(self.position, self.id)
         if(np.fabs(deflect) > 0) : self.momentum = rotate(self.momentum,deflect)
         if((time % stephit == 0) & (np.linalg.norm(self.position) > self.traceMin)):
-            self.history = self.history.append(pd.DataFrame({'particle':[self.id],'hit':[time], 'layer':self.layer, 'x':[self.position[0]], 'y':[self.position[1]]}), ignore_index=True)
+            self.history = self.history.append(pd.DataFrame({'particle':[self.id],'hit':[time], 'layer':self.layer, 'iphi':iphi, 'x':[self.position[0]], 'y':[self.position[1]]}), ignore_index=True)
         pass
 
 
@@ -135,12 +135,12 @@ class Detector(object):
         self.hit_particle = np.zeros((self.Nrho, np.max(self.Nphi)))
         self.cells_width = np.zeros((self.Nrho, np.max(self.Nphi)))
         self.cells_hit = np.zeros((self.Nrho, np.max(self.Nphi)))
-        self.history = pd.DataFrame({'particle':[0],'hit':[0], 'layer':[0], 'x':[0], 'y':[0]})
+        self.history = pd.DataFrame({'particle':[0],'hit':[0], 'layer':[0],'iphi':[0], 'x':[0], 'y':[0]})
         self.history= self.history.drop(self.history.index[[0]])
 
     def reset(self):
         self.cells_hit = np.zeros((self.Nrho, np.max(self.Nphi)))
-        self.history = pd.DataFrame({'particle':[0], 'hit':[0], 'layer':[0], 'x':[0.], 'y':[0.]})
+        self.history = pd.DataFrame({'particle':[0], 'hit':[0], 'layer':[0],'iphi':[0], 'x':[0.], 'y':[0.]})
         self.history = self.history.drop(self.history.index[[0]])
 
 
@@ -148,7 +148,6 @@ class Detector(object):
         deflect=0.
         for irho in range(0, self.Nrho):
             for iphi in range(0,self.Nphi[irho]):
-                #                if(np.linalg.norm(position - [self.cells_x[irho,iphi],self.cells_y[irho,iphi],0]) < self.detsize[irho]):
                 if(
                    (np.fabs(np.linalg.norm(position) - self.cells_r[irho]) < self.thickness)
                    &
@@ -166,7 +165,7 @@ class Detector(object):
         for irho in range(0, self.Nrho):
             for iphi in range(0,self.Nphi[irho]):
                 if(self.cells_hit[irho,iphi] == 1):
-                    self.history = self.history.append(pd.DataFrame({'particle':self.hit_particle[irho,iphi], 'hit':[ihit], 'layer':[irho], 'x':self.cells_x[irho,iphi], 'y':self.cells_y[irho,iphi]}), ignore_index=True)
+                    self.history = self.history.append(pd.DataFrame({'particle':self.hit_particle[irho,iphi], 'hit':[ihit], 'layer':[irho],'iphi':[iphi], 'x':self.cells_x[irho,iphi], 'y':self.cells_y[irho,iphi]}), ignore_index=True)
                     ihit+=1
         self.history=self.history.sort(['particle','layer','hit'])
 

@@ -4,12 +4,12 @@ from Simulate import *
 
 sim = Simulator()
 
-N = 20
+N = 5000
 Mmin = 1
 Mmax = 1
 nperevent=10
 
-data = pd.DataFrame({'event':[0],'particle':[0],'hit':[0],'layer':[0], 'x':[0.], 'y':[0.]})
+data = pd.DataFrame({'event':[0],'particle':[0],'hit':[0],'layer':[0],'iphi':[0],'x':[0.], 'y':[0.]})
 data = data.drop(data.index[[0]])
 
 data_particle = pd.DataFrame({'event':[0],'particle':[0],'pt':[0.], 'phi':[0.], 'xVtx':[0.], 'yVtx':[0.]})
@@ -19,7 +19,7 @@ print "Will now produce ",N," events with in average",nperevent, " tracks"
 for ievent in range(0,N):
 
     if(ievent % 1 == 0): print "processing event : ",ievent
-    event = pd.DataFrame({'event':[0],'particle':[0],'hit':[0],'layer':[0], 'x':[0.], 'y':[0.]})
+    event = pd.DataFrame({'event':[0],'particle':[0],'hit':[0],'layer':[0],'iphi':[0], 'x':[0.], 'y':[0.]})
     event = event.drop(event.index[[0]])
 
     event_particle = pd.DataFrame({'event':[0],'particle':[0],'pt':[0.], 'phi':[0.], 'xVtx':[0.], 'yVtx':[0.]})
@@ -71,9 +71,20 @@ for ievent in range(0,N):
     data=data.append(data_event, ignore_index=True)
     data_particle=data_particle.append(event_particle, ignore_index=True)
 
+for col in ['event','particle','hit','layer','iphi']:
+    data[col] = data[col].astype('int32')
+
+for col in ['event','particle']:
+    data_particle[col] = data_particle[col].astype('int32')
+
+
 # precision could probably be reduced
-data.to_csv("hits_100.csv",header=True,cols=['event','particle','hit','layer', 'x', 'y'], engine='python')
-data_particle.to_csv("particles_100.csv",header=True,cols=['event','particle','ch_pt', 'phi', 'xVtx', 'yVtx'], engine='python')
+data.to_csv("hits_"+str(N)+".csv",header=True,
+            cols=['event','particle','hit','layer','iphi','x', 'y'],
+            engine='python', index=False)
+data_particle.to_csv("particles_"+str(N)+".csv",header=True,
+                     cols=['event','particle','pt', 'phi', 'xVtx', 'yVtx'],
+                     engine='python', index=False)
 
 
 
