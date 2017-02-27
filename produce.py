@@ -4,7 +4,7 @@ from Simulate import *
 
 sim = Simulator()
 
-N = 100
+N = 1000
 Mmin = 1
 Mmax = 1
 nperevent=10
