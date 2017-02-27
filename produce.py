@@ -4,7 +4,7 @@ from Simulate import *
 
 sim = Simulator()
 
-N = 5000
+N = 100
 Mmin = 1
 Mmax = 1
 nperevent=10
@@ -61,7 +61,9 @@ for ievent in range(0,N):
                                         )
                               )
 
-    hits=sim.detector.getHits()
+    hits = sim.detector.getHits()
+    hits = hits.iloc[np.random.permutation(len(hits.index))]
+    hits = hits.reset_index(drop=True)
     data_event=pd.concat(
                          [pd.DataFrame({'event':[ievent]*len(hits.index)}),
                           hits],
@@ -78,9 +80,11 @@ for col in ['event','particle']:
     data_particle[col] = data_particle[col].astype('int32')
 
 
+data = data.drop(['hit'], axis=1)
+
 # precision could probably be reduced
 data.to_csv("hits_"+str(N)+".csv",header=True,
-            cols=['event','particle','hit','layer','iphi','x', 'y'],
+            cols=['event','particle','layer','iphi','x', 'y'],
             engine='python', index=False)
 data_particle.to_csv("particles_"+str(N)+".csv",header=True,
                      cols=['event','particle','pt', 'phi', 'xVtx', 'yVtx'],
