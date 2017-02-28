@@ -1,19 +1,34 @@
 
 import numpy as np
+import argparse
+
 from Simulate import *
 
 sim = Simulator()
 
-N = 1000
+
+
+parser = argparse.ArgumentParser(description='Simulates particles in 2D')
+parser.add_argument('--seed', type=int, default=0, required=False)
+parser.add_argument('--N', type=int, default=10, required=False)
+parser.add_argument('--M', type=int, default=10, required=False)
+
+args = parser.parse_args()
+seed = args.seed
+N = args.N
+nperevent = args.M
+
 Mmin = 1
 Mmax = 1
-nperevent=10
 
 data = pd.DataFrame({'event':[0],'particle':[0],'hit':[0],'layer':[0],'iphi':[0],'x':[0.], 'y':[0.]})
 data = data.drop(data.index[[0]])
 
 data_particle = pd.DataFrame({'event':[0],'particle':[0],'pt':[0.], 'phi':[0.], 'xVtx':[0.], 'yVtx':[0.]})
 data_particle = data_particle.drop(data_particle.index[[0]])
+
+np.random.seed(seed)
+
 
 print "Will now produce ",N," events with in average",nperevent, " tracks"
 for ievent in range(0,N):
@@ -83,10 +98,10 @@ for col in ['event','particle']:
 data = data.drop(['hit'], axis=1)
 
 # precision could probably be reduced
-data.to_csv("hits_"+str(N)+".csv",header=True,
+data.to_csv("hits_"+str(N)+"_"+str(seed)+".csv",header=(seed==0),
             cols=['event','particle','layer','iphi','x', 'y'],
             engine='python', index=False)
-data_particle.to_csv("particles_"+str(N)+".csv",header=True,
+data_particle.to_csv("particles_"+str(N)+"_"+str(seed)+".csv",header=(seed==0),
                      cols=['event','particle','pt', 'phi', 'xVtx', 'yVtx'],
                      engine='python', index=False)
 

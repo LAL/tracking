@@ -91,9 +91,7 @@ class Particle(object):
               
 
 class Detector(object):
-    def __init__(self,seed=1234):
-        self.seed=seed
-        np.random.seed(self.seed)
+    def __init__(self):
         self.inefficiency=0.03  # probability for a hit to not be recorded
         self.stoppingprobability=0.01 #probability for a track to stop (each layer)
         self.Nrho = 9
