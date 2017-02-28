@@ -28,10 +28,10 @@ data_particle = pd.DataFrame({'event':[0],'particle':[0],'pt':[0.], 'phi':[0.], 
 data_particle = data_particle.drop(data_particle.index[[0]])
 
 np.random.seed(seed)
-
+event_offset = seed * N
 
 print "Will now produce ",N," events with in average",nperevent, " tracks"
-for ievent in range(0,N):
+for ievent in range(event_offset,N+event_offset):
 
     if(ievent % 1 == 0): print "processing event : ",ievent
     event = pd.DataFrame({'event':[0],'particle':[0],'hit':[0],'layer':[0],'iphi':[0], 'x':[0.], 'y':[0.]})
