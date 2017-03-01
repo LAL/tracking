@@ -11,7 +11,7 @@ sim = Simulator()
 parser = argparse.ArgumentParser(description='Simulates particles in 2D')
 parser.add_argument('--seed', type=int, default=0, required=False)
 parser.add_argument('--N', type=int, default=10, required=False)
-parser.add_argument('--M', type=int, default=10, required=False)
+parser.add_argument('--M', type=int, default=20, required=False)
 
 args = parser.parse_args()
 seed = args.seed

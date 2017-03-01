@@ -28,7 +28,7 @@ def score(y_test, y_pred):
         nsubcluster=len(np.unique(found_hits[found_hits[:] >= 0]))
 
         if(nsubcluster > 0):
-            print found_hits[found_hits[:] >= 0]
+            #           print found_hits[found_hits[:] >= 0]
             b=np.bincount((found_hits[found_hits[:] >= 0]).astype(dtype='int64'))
             a=np.argmax(b)
 
@@ -54,7 +54,7 @@ def score(y_test, y_pred):
     sorted=np.argsort(hitintrack)
     hitintrack=hitintrack[sorted]
     assignedtrack=assignedtrack[sorted]
-    print hitintrack
+    #    print hitintrack
     for particle in particles:
         itrack=assignedtrack[ipart]
         if((itrack < 0) | (len(assignedtrack[assignedtrack[:] == itrack])>1)):

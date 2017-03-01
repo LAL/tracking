@@ -5,11 +5,13 @@ from sklearn.cross_validation import ShuffleSplit
 
 import Tracking
 import Clustering
+import Hough
 
 from Score_assignment import *
 
+debug = False
 
-filename = "hits_100.csv"
+filename = "hits_merged.csv"
 
 def read_data(filename):
     df = pd.read_csv(filename)
@@ -33,17 +35,14 @@ if __name__ == '__main__':
 
         # use dummy clustering
         #tracker = Tracking.HitToTrackAssignment()
-        tracker = Clustering.ClusterDBSCAN(eps=0.5, rscale=0.001)
-
+        #tracker = Clustering.ClusterDBSCAN(eps=0.5, rscale=0.001)
+        tracker = Hough.Hough(n_theta_bins=100, n_radius_bins=100, min_radius=1., min_hits=4)
+    
         X_train_df = X_df.iloc[train_is].copy()
         y_train_df = y_df.iloc[train_is].copy()
         X_test_df = X_df.iloc[test_is].copy()
         y_test_df = y_df.iloc[test_is].copy()
 
-        # Temporarily bypass splitting (need to avoid shuffling events)
-        X_test_df = X_df.copy()
-        y_test_df = y_df.copy()
-        
         tracker.fit(X_train_df.values, y_train_df.values)
         y_predicted = tracker.predict(X_test_df.values)
 
@@ -54,12 +53,13 @@ if __name__ == '__main__':
             event_indices=(X_test_df['event']==ievent).values
             y_event_df = y_test_df.loc[event_indices]
             y_predicted_event = y_predicted[event_indices]
-            print "----------------------"
-            print y_event_df.values[:,0]
-            print "----------------------"
+            if(debug):
+                print "----------------------"
+                print y_event_df.values[:,0]
+                print "----------------------"
 
-            print y_predicted_event
-            print "----------------------"
+                print y_predicted_event
+                print "----------------------"
             event_score = score(y_event_df.values[:,0], y_predicted_event)
             total_score += event_score
 

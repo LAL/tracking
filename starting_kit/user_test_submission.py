@@ -12,7 +12,6 @@ def score(y_test, y_pred):
     particles = np.unique(y_test)
     npart = len(particles)
     nhit = len(y_test)
-    dummyarray = np.full(shape=nhit + 1,fill_value=-1, dtype='int64')
     
     assignedtrack = np.full(shape=npart,fill_value=-1, dtype='int64')
     hitintrack = np.full(shape=npart,fill_value=0, dtype='int64')
@@ -32,7 +31,6 @@ def score(y_test, y_pred):
         nsubcluster=len(np.unique(found_hits[found_hits[:] >= 0]))
         
         if(nsubcluster > 0):
-            print found_hits[found_hits[:] >= 0]
             b=np.bincount((found_hits[found_hits[:] >= 0]).astype(dtype='int64'))
             a=np.argmax(b)
             
@@ -49,7 +47,6 @@ def score(y_test, y_pred):
     sorted=np.argsort(hitintrack)
     hitintrack=hitintrack[sorted]
     assignedtrack=assignedtrack[sorted]
-    print hitintrack
     for particle in particles:
         itrack=assignedtrack[ipart]
         if((itrack < 0) | (len(assignedtrack[assignedtrack[:] == itrack])>1)):
