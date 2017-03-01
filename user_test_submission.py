@@ -31,21 +31,29 @@ if __name__ == '__main__':
 
     #no training, use all sample for test:
     skf = ShuffleSplit(
-    len(y_df), n_iter=1, test_size=0.2, random_state=57)
+    len(events), n_iter=1, test_size=0.2, random_state=57)
 
     print("Training file ...")
     for train_is, test_is in skf:
         print '--------------------------'
+
+        print train_is
 
         # use dummy clustering
         #tracker = Tracking.HitToTrackAssignment()
         #tracker = Clustering.ClusterDBSCAN(eps=0.5, rscale=0.001)
         #tracker = Hough.Hough(n_theta_bins=100, n_radius_bins=100, min_radius=1., min_hits=4)
         #tracker = NearestHit.NearestHit(min_cos_value=0.9)
-        #tracker = LinearApproximation.LinearApproximation(min_hits=4, window_width=0.03)
+        tracker = LinearApproximation.LinearApproximation(min_hits=4, window_width=0.03)
 
-        train_is = range(0,len(y_df.index))
-        test_is = range(0,len(y_df.index))
+        train_hit_is = np.array([])
+        test_hit_is = np.array([])
+
+        for event in train_is:
+            train_hit_is = np.append(train_hit_is,X_df.loc[X_df['event'] == event].index)
+
+        for event in test_is:
+            test_hit_is = np.append(test_hit_is,X_df.loc[X_df['event'] == event].index)
 
         X_train_df = X_df.iloc[train_is].copy()
         y_train_df = y_df.iloc[train_is].copy()
