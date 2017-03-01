@@ -4,9 +4,9 @@ import numpy as np
 def score(y_test, y_pred):
 
     total_score = 0.
-    y_events = y_test[:,1]
-    y_test = y_test[:,0]
-    y_pred = y_pred[:,0]
+    y_events = y_test[:,0]
+    y_test = y_test[:,1]
+    y_pred = y_pred[:,1]
 
     events = np.unique(y_events)
     for ievent in events:

@@ -17,7 +17,7 @@ filename = "data/hits_merged.csv"
 
 def read_data(filename):
     df = pd.read_csv(filename)
-    y_df = df[['particle']] + 1000 * df[['event']].values
+    y_df = df.drop(['layer','iphi','x','y'], axis=1)
     X_df = df.drop(['particle'], axis=1)
     return X_df.values, y_df.values
 
@@ -44,8 +44,8 @@ if __name__ == '__main__':
         #tracker = NearestHit.NearestHit(min_cos_value=0.9)
         tracker = LinearApproximation.LinearApproximation(min_hits=4, window_width=0.03)
 
-        train_hit_is = np.where(np.in1d(X[:,0],train_is))
-        test_hit_is = np.where(np.in1d(X[:,0],test_is))
+        train_hit_is = np.where(np.in1d(y[:,0],train_is))
+        test_hit_is = np.where(np.in1d(y[:,0],test_is))
 
         X_train = X[train_hit_is]
         y_train = y[train_hit_is]
@@ -57,12 +57,11 @@ if __name__ == '__main__':
         y_predicted = np.zeros((len(y_test),2))
 
         tracker.fit(X_train, y_train)
-        y_predicted[:,0] = tracker.predict(X_test)
-        y_predicted[:,1] = X_test[:,0]
-        y_test_e[:,0] = y_test[:,0]
-        y_test_e[:,1] = X_test[:,0]
+
+        y_predicted[:,0] = X_test[:,0]
+        y_predicted[:,1] = tracker.predict(X_test)
 
         # Score the result
-        total_score = score(y_test_e, y_predicted)
+        total_score = score(y_test, y_predicted)
         print 'average score = ', total_score
 
