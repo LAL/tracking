@@ -59,8 +59,6 @@ if __name__ == '__main__':
         tracker.fit(X_train, y_train)
         y_predicted[:,0] = tracker.predict(X_test)
         y_predicted[:,1] = X_test[:,0]
-        print len(y_test)
-        print len(X_test[:,0])
         y_test_e[:,0] = y_test[:,0]
         y_test_e[:,1] = X_test[:,0]
 
