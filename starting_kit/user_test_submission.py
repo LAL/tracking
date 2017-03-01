@@ -117,10 +117,10 @@ if __name__ == '__main__':
         for event in test_is:
             test_hit_is = np.append(test_hit_is,X_df.loc[X_df['event'] == event].index)
             
-            X_train_df = X_df.iloc[train_is].copy()
-            y_train_df = y_df.iloc[train_is].copy()
-            X_test_df = X_df.iloc[test_is].copy()
-            y_test_df = y_df.iloc[test_is].copy()
+            X_train_df = X_df.iloc[train_hit_is].copy()
+            y_train_df = y_df.iloc[train_hit_is].copy()
+            X_test_df = X_df.iloc[test_hit_is].copy()
+            y_test_df = y_df.iloc[test_hit_is].copy()
             y_test = np.zeros((len(y_test_df),2))
             y_predicted = np.zeros((len(y_test_df),2))
             y_test_events = X_test_df['event'].values
