@@ -7,61 +7,78 @@ import Tracking
 
 def score(y_test, y_pred):
     
-    eff_total = 0.
+    total_score = 0.
+    y_events = y_test[:,1]
+    y_test = y_test[:,0]
+    y_pred = y_pred[:,0]
     
-    particles = np.unique(y_test)
-    npart = len(particles)
-    nhit = len(y_test)
-    
-    assignedtrack = np.full(shape=npart,fill_value=-1, dtype='int64')
-    hitintrack = np.full(shape=npart,fill_value=0, dtype='int64')
-    eff = np.full(shape=npart,fill_value=0.)
-    con = np.full(shape=npart,fill_value=0.)
-    
-    # assign tracks to particles
-    ipart = 0
-    for particle in particles:
+    events = np.unique(y_events)
+    for ievent in events:
+        eff_total = 0.
+        event_indices=(y_events==ievent)
+        y_test_event = y_test[event_indices]
+        y_pred_event = y_pred[event_indices]
         
-        eff[ipart] = 0.
-        con[ipart] = 0.
+        particles = np.unique(y_test_event)
+        npart = len(particles)
+        nhit = len(y_test_event)
+        dummyarray = np.full(shape=nhit + 1,fill_value=-1, dtype='int64')
         
-        true_hits = y_test[y_test[:] == particle]
-        found_hits = y_pred[y_test[:] == particle]
+        assignedtrack = np.full(shape=npart,fill_value=-1, dtype='int64')
+        hitintrack = np.full(shape=npart,fill_value=0, dtype='int64')
+        eff = np.full(shape=npart,fill_value=0.)
+        con = np.full(shape=npart,fill_value=0.)
         
-        nsubcluster=len(np.unique(found_hits[found_hits[:] >= 0]))
-        
-        if(nsubcluster > 0):
-            b=np.bincount((found_hits[found_hits[:] >= 0]).astype(dtype='int64'))
-            a=np.argmax(b)
+        # assign tracks to particles
+        ipart = 0
+        for particle in particles:
             
-            maxcluster = a
+            eff[ipart] = 0.
+            con[ipart] = 0.
             
-            assignedtrack[ipart]=maxcluster
-            hitintrack[ipart]=len(found_hits[found_hits[:] == maxcluster])
-   
-        ipart += 1
-    
-    
-    # resolve duplicates and count good assignments
-    ipart = 0
-    sorted=np.argsort(hitintrack)
-    hitintrack=hitintrack[sorted]
-    assignedtrack=assignedtrack[sorted]
-    for particle in particles:
-        itrack=assignedtrack[ipart]
-        if((itrack < 0) | (len(assignedtrack[assignedtrack[:] == itrack])>1)):
-            hitintrack = np.delete(hitintrack,ipart)
-            assignedtrack = np.delete(assignedtrack,ipart)
-        else:
+            true_hits = y_test_event[y_test_event[:] == particle]
+            found_hits = y_pred_event[y_test_event[:] == particle]
+            
+            nsubcluster=len(np.unique(found_hits[found_hits[:] >= 0]))
+            
+            if(nsubcluster > 0):
+                b=np.bincount((found_hits[found_hits[:] >= 0]).astype(dtype='int64'))
+                a=np.argmax(b)
+                
+                maxcluster = a
+                
+                assignedtrack[ipart]=maxcluster
+                hitintrack[ipart]=len(found_hits[found_hits[:] == maxcluster])
+            
             ipart += 1
-    ngood = 0.
-    ngood = np.sum(hitintrack)
-    eff_total = eff_total + (float(ngood) / float(nhit))
+        
+        
+        # resolve duplicates and count good assignments
+        ipart = 0
+        sorted=np.argsort(hitintrack)
+        hitintrack=hitintrack[sorted]
+        assignedtrack=assignedtrack[sorted]
+        #    print hitintrack
+        for particle in particles:
+            itrack=assignedtrack[ipart]
+            if((itrack < 0) | (len(assignedtrack[assignedtrack[:] == itrack])>1)):
+                hitintrack = np.delete(hitintrack,ipart)
+                assignedtrack = np.delete(assignedtrack,ipart)
+            else:
+                ipart += 1
+        ngood = 0.
+        ngood = np.sum(hitintrack)
+        eff_total = eff_total + (float(ngood) / float(nhit))
+        # remove combinatorials
+        print npart, nhit, eff_total
+        
+        total_score += eff_total
     
-    # remove combinatorials
-    print npart, nhit, eff_total
-    return eff_total
+    
+    total_score /= len(y_events)
+    
 
+return eff_total
 
 
 
@@ -95,24 +112,16 @@ if __name__ == '__main__':
         y_train_df = y_df.iloc[train_is].copy()
         X_test_df = X_df.iloc[test_is].copy()
         y_test_df = y_df.iloc[test_is].copy()
-
-        # Temporarily bypass splitting (need to avoid shuffling events)
-        X_test_df = X_df.copy()
-        y_test_df = y_df.copy()
+        y_predicted = np.zeros((len(y_test_df),2))
         
         tracker.fit(X_train_df.values, y_train_df.values)
-        y_predicted = tracker.predict(X_test_df.values)
-
+        y_predicted[:,0] = tracker.predict(X_test_df.values)
+        
+        y_predicted[:,1] = X_test_df['event'].values
+        y_test_df['event'] = X_test_df['event']
+        y_test = y_test_df.values
+        
         # Score the result
-        total_score = 0.
-        events = np.unique(X_test_df['event'].values)
-        for ievent in events:
-            event_indices=(X_test_df['event']==ievent).values
-            y_event_df = y_test_df.loc[event_indices]
-            y_predicted_event = y_predicted[event_indices]
-            #          print y_predicted_event
-            event_score = score(y_event_df.values[:,0], y_predicted_event)
-            total_score += event_score
-        total_score /= len(events)
+        total_score = score(y_test, y_predicted)
         print 'average score = ', total_score
 

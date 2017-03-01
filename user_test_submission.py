@@ -6,12 +6,14 @@ from sklearn.cross_validation import ShuffleSplit
 import Tracking
 import Clustering
 import Hough
+import NearestHit
+import LinearApproximation
 
 from Score_assignment import *
 
 debug = False
 
-filename = "hits_merged.csv"
+filename = "data/hits_merged.csv"
 
 def read_data(filename):
     df = pd.read_csv(filename)
@@ -36,33 +38,24 @@ if __name__ == '__main__':
         # use dummy clustering
         #tracker = Tracking.HitToTrackAssignment()
         #tracker = Clustering.ClusterDBSCAN(eps=0.5, rscale=0.001)
-        tracker = Hough.Hough(n_theta_bins=100, n_radius_bins=100, min_radius=1., min_hits=4)
-    
+        #tracker = Hough.Hough(n_theta_bins=100, n_radius_bins=100, min_radius=1., min_hits=4)
+        #tracker = NearestHit.NearestHit(min_cos_value=0.9)
+        tracker = LinearApproximation.LinearApproximation(min_hits=4, window_width=0.03)
+        
         X_train_df = X_df.iloc[train_is].copy()
         y_train_df = y_df.iloc[train_is].copy()
         X_test_df = X_df.iloc[test_is].copy()
         y_test_df = y_df.iloc[test_is].copy()
+        y_predicted = np.zeros((len(y_test_df),2))
 
         tracker.fit(X_train_df.values, y_train_df.values)
-        y_predicted = tracker.predict(X_test_df.values)
+        y_predicted[:,0] = tracker.predict(X_test_df.values)
+
+        y_predicted[:,1] = X_test_df['event'].values
+        y_test_df['event'] = X_test_df['event']
+        y_test = y_test_df.values
 
         # Score the result
-        total_score = 0.
-        events = np.unique(X_test_df['event'].values)
-        for ievent in events:
-            event_indices=(X_test_df['event']==ievent).values
-            y_event_df = y_test_df.loc[event_indices]
-            y_predicted_event = y_predicted[event_indices]
-            if(debug):
-                print "----------------------"
-                print y_event_df.values[:,0]
-                print "----------------------"
-
-                print y_predicted_event
-                print "----------------------"
-            event_score = score(y_event_df.values[:,0], y_predicted_event)
-            total_score += event_score
-
-        total_score /= len(events)
+        total_score = score(y_test, y_predicted)
         print 'average score = ', total_score
 

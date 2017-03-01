@@ -3,71 +3,77 @@ import numpy as np
 
 def score(y_test, y_pred):
 
-    eff_total = 0.
+    total_score = 0.
+    y_events = y_test[:,1]
+    y_test = y_test[:,0]
+    y_pred = y_pred[:,0]
 
-    particles = np.unique(y_test)
-    npart = len(particles)
-    nhit = len(y_test)
-    dummyarray = np.full(shape=nhit + 1,fill_value=-1, dtype='int64')
+    events = np.unique(y_events)
+    for ievent in events:
+        eff_total = 0.
+        event_indices=(y_events==ievent)
+        y_test_event = y_test[event_indices]
+        y_pred_event = y_pred[event_indices]
 
-    assignedtrack = np.full(shape=npart,fill_value=-1, dtype='int64')
-    hitintrack = np.full(shape=npart,fill_value=0, dtype='int64')
-    eff = np.full(shape=npart,fill_value=0.)
-    con = np.full(shape=npart,fill_value=0.)
+        particles = np.unique(y_test_event)
+        npart = len(particles)
+        nhit = len(y_test_event)
+        dummyarray = np.full(shape=nhit + 1,fill_value=-1, dtype='int64')
 
-    # assign tracks to particles
-    ipart = 0
-    for particle in particles:
-        
-        eff[ipart] = 0.
-        con[ipart] = 0.
+        assignedtrack = np.full(shape=npart,fill_value=-1, dtype='int64')
+        hitintrack = np.full(shape=npart,fill_value=0, dtype='int64')
+        eff = np.full(shape=npart,fill_value=0.)
+        con = np.full(shape=npart,fill_value=0.)
 
-        true_hits = y_test[y_test[:] == particle]
-        found_hits = y_pred[y_test[:] == particle]
+        # assign tracks to particles
+        ipart = 0
+        for particle in particles:
+            
+            eff[ipart] = 0.
+            con[ipart] = 0.
 
-        nsubcluster=len(np.unique(found_hits[found_hits[:] >= 0]))
+            true_hits = y_test_event[y_test_event[:] == particle]
+            found_hits = y_pred_event[y_test_event[:] == particle]
 
-        if(nsubcluster > 0):
-            #           print found_hits[found_hits[:] >= 0]
-            b=np.bincount((found_hits[found_hits[:] >= 0]).astype(dtype='int64'))
-            a=np.argmax(b)
+            nsubcluster=len(np.unique(found_hits[found_hits[:] >= 0]))
 
-            maxcluster = a
+            if(nsubcluster > 0):
+                b=np.bincount((found_hits[found_hits[:] >= 0]).astype(dtype='int64'))
+                a=np.argmax(b)
 
-            assignedtrack[ipart]=maxcluster
-            hitintrack[ipart]=len(found_hits[found_hits[:] == maxcluster])
+                maxcluster = a
 
-            #           eff[ipart] = hitintrack[ipart]/len(true_hits)
+                assignedtrack[ipart]=maxcluster
+                hitintrack[ipart]=len(found_hits[found_hits[:] == maxcluster])
 
-            # evaluate contamination
-            #            overlap = (y_pred[:] == maxcluster)
-            #            others = (y_test[:] != particle)
-            #            mask = overlap & others
-            #            noise_hits = y_pred[mask]
-            #            con[ipart] = len(noise_hits) / len(true_hits)
-
-        ipart += 1
-
-
-    # resolve duplicates and count good assignments
-    ipart = 0
-    sorted=np.argsort(hitintrack)
-    hitintrack=hitintrack[sorted]
-    assignedtrack=assignedtrack[sorted]
-    #    print hitintrack
-    for particle in particles:
-        itrack=assignedtrack[ipart]
-        if((itrack < 0) | (len(assignedtrack[assignedtrack[:] == itrack])>1)):
-            hitintrack = np.delete(hitintrack,ipart)
-            assignedtrack = np.delete(assignedtrack,ipart)
-        else:
             ipart += 1
-    ngood = 0.
-    ngood = np.sum(hitintrack)
-    eff_total = eff_total + (float(ngood) / float(nhit))
-    
-    # remove combinatorials
-    print npart, nhit, eff_total
+
+
+        # resolve duplicates and count good assignments
+        ipart = 0
+        sorted=np.argsort(hitintrack)
+        hitintrack=hitintrack[sorted]
+        assignedtrack=assignedtrack[sorted]
+        #    print hitintrack
+        for particle in particles:
+            itrack=assignedtrack[ipart]
+            if((itrack < 0) | (len(assignedtrack[assignedtrack[:] == itrack])>1)):
+                hitintrack = np.delete(hitintrack,ipart)
+                assignedtrack = np.delete(assignedtrack,ipart)
+            else:
+                ipart += 1
+        ngood = 0.
+        ngood = np.sum(hitintrack)
+        eff_total = eff_total + (float(ngood) / float(nhit))
+        # remove combinatorials
+        print npart, nhit, eff_total
+  
+        total_score += eff_total
+
+
+    total_score /= len(y_events)
+
+
     return eff_total
 
 
