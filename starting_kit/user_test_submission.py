@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     #no training, use all sample for test:
     skf = ShuffleSplit(
-    len(y_df), n_iter=1, test_size=0.99, random_state=57)
+    len(y_df), n_iter=1, test_size=0.2, random_state=57)
     print("Training file ...")
     for train_is, test_is in skf:
         print '--------------------------'
