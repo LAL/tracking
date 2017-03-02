@@ -2,11 +2,12 @@ import numpy as np
 
 
 def score(y_test, y_pred):
+    colevent = 1
 
     total_score = 0.
-    y_events = y_test[:,0]
-    y_test = y_test[:,1]
-    y_pred = y_pred[:,1]
+    y_events = y_test[:,colevent]
+    y_test = y_test[:,0]
+    y_pred = y_pred[:,0]
 
     events = np.unique(y_events)
     for ievent in events:
@@ -18,7 +19,6 @@ def score(y_test, y_pred):
         particles = np.unique(y_test_event)
         npart = len(particles)
         nhit = len(y_test_event)
-        dummyarray = np.full(shape=nhit + 1,fill_value=-1, dtype='int64')
 
         assignedtrack = np.full(shape=npart,fill_value=-1, dtype='int64')
         hitintrack = np.full(shape=npart,fill_value=0, dtype='int64')

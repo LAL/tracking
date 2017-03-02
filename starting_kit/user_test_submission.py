@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.cross_validation import ShuffleSplit
 
 import Tracking
+import NearestHit
 
 def score(y_test, y_pred):
     
@@ -78,12 +79,13 @@ def score(y_test, y_pred):
 
 
 
-filename = "hits_merged.csv"
+filename = "../data/hits_merged.csv"
 
 def read_data(filename):
-    df = pd.read_csv(filename)
+    df = pd.read_csv(filename)[['layer','iphi','x','y','event','particle']]
+    print df.columns
     y_df = df.drop(['layer','iphi','x','y'], axis=1)
-    X_df = df.drop(['particle'], axis=1)
+    X_df = df.drop(['particle'], axis=1)[['layer','iphi','x','y','event']]
     return X_df.values, y_df.values
 
 
@@ -96,14 +98,15 @@ if __name__ == '__main__':
     
     #no training, use all sample for test:
     skf = ShuffleSplit(
-    len(events), n_iter=1, test_size=0.2, random_state=57)
+    len(events), n_iter=1, test_size=0.1, random_state=57)
 
     print("Training file ...")
     for train_is, test_is in skf:
         print '--------------------------'
 
         # use dummy clustering
-        tracker = Tracking.HitToTrackAssignment()
+        # tracker = Tracking.HitToTrackAssignment()
+        tracker = NearestHit.NearestHit(min_cos_value=0.9)
 
         train_hit_is = np.where(np.in1d(y[:,0],train_is))
         test_hit_is = np.where(np.in1d(y[:,0],test_is))

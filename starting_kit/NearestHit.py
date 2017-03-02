@@ -38,6 +38,8 @@ class NearestHit(object):
         """
 
         x, y, layers = X[:, 3], X[:, 4], X[:, 1]
+        print x, y, layers
+
         used = numpy.zeros(len(x))
         labels = -1. * numpy.ones(len(x))
         track_id = 0
@@ -66,6 +68,10 @@ class NearestHit(object):
 
                 # Check cos of angle between two track segments
                 if one_layer != 1:
+                    print track
+                    print track[-2]
+                    print track[-1]
+                    print track_hit_id
 
                     x1, x2, x3 = x[track[-2]],  x[track[-1]], x[track_hit_id]
                     y1, y2, y3 = y[track[-2]],  y[track[-1]], y[track_hit_id]
