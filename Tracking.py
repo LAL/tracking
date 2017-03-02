@@ -10,6 +10,13 @@ class HitToTrackAssignment(BaseEstimator):
         self.cls = DBSCAN(eps=self.eps, min_samples=self.min_hits)
     
     def fit(self, X, y):
+        # The columns of the numpy array X (input) are
+        # 0 : event
+
+        # The columns of the numpy array y (target) are
+        # 0 : event
+
+
         self.cls.fit(X,y[:,1])
 
     def predict(self, X):
