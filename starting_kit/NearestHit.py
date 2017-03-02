@@ -3,6 +3,8 @@ __author__ = 'mikhail91'
 
 import numpy
 
+coleventX = 4
+
 class NearestHit(object):
 
 
@@ -37,9 +39,7 @@ class NearestHit(object):
             Recognized track labels.
         """
 
-        x, y, layers = X[:, 3], X[:, 4], X[:, 1]
-        print x, y, layers
-
+        x, y, layers = X[:, 2], X[:, 3], X[:, 0]
         used = numpy.zeros(len(x))
         labels = -1. * numpy.ones(len(x))
         track_id = 0
@@ -68,11 +68,6 @@ class NearestHit(object):
 
                 # Check cos of angle between two track segments
                 if one_layer != 1:
-                    print track
-                    print track[-2]
-                    print track[-1]
-                    print track_hit_id
-
                     x1, x2, x3 = x[track[-2]],  x[track[-1]], x[track_hit_id]
                     y1, y2, y3 = y[track[-2]],  y[track[-1]], y[track_hit_id]
                     dx1, dx2 = x2 - x1, x3 - x2
@@ -109,13 +104,16 @@ class NearestHit(object):
             Recognized track labels.
         """
 
-        event_ids = numpy.unique(X[:, 0])
+        event_ids = numpy.unique(X[:, coleventX])
+        y = numpy.zeros((len(X),2))
         labels = []
 
         for one_event_id in event_ids:
 
-            X_event = X[X[:, 0] == one_event_id]
+            X_event = X[X[:, coleventX] == one_event_id]
             labels_event = self.predict_one_event(X_event)
             labels += list(labels_event)
 
-        return numpy.array(labels)
+        y[:,0] = labels
+        y[:,1] = X[:, coleventX]
+        return y

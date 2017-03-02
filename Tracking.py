@@ -27,8 +27,9 @@ class HitToTrackAssignment(BaseEstimator):
         for ievent in events:
             X_event = X[X[:,coleventX] == ievent]
             y_event = np.zeros((len(X_event),2))
-            y_event = [ievent] * len(X_event)
-            y_event = self.cls.fit_predict(X_event)
-            y = np.append(y,y_event)
+            y_event[:,0] = self.cls.fit_predict(X_event)
+            y_event[:,1] = [ievent] * len(X_event)
+            print y_event
+            y = np.append(y,y_event,axis=0)
         return y
 

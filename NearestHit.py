@@ -105,6 +105,7 @@ class NearestHit(object):
         """
 
         event_ids = numpy.unique(X[:, coleventX])
+        y = numpy.zeros((len(X),2))
         labels = []
 
         for one_event_id in event_ids:
@@ -113,4 +114,6 @@ class NearestHit(object):
             labels_event = self.predict_one_event(X_event)
             labels += list(labels_event)
 
-        return numpy.array(labels)
+        y[:,0] = labels
+        y[:,1] = X[:, coleventX]
+        return y

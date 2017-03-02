@@ -1,11 +1,11 @@
 import numpy as np
 
+coleventy = 1
 
 def score(y_test, y_pred):
-    colevent = 1
 
     total_score = 0.
-    y_events = y_test[:,colevent]
+    y_events = y_test[:,coleventy]
     y_test = y_test[:,0]
     y_pred = y_pred[:,0]
 

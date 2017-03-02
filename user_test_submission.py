@@ -55,13 +55,11 @@ if __name__ == '__main__':
         X_test = X[test_hit_is]
         y_test = y[test_hit_is]
 
-        y_test_e = np.zeros((len(y_test),2))
         y_predicted = np.zeros((len(y_test),2))
 
         tracker.fit(X_train, y_train)
 
-        y_predicted[:,0] = tracker.predict(X_test)
-        y_predicted[:,1] = X_test[:,coleventX]
+        y_predicted = tracker.predict(X_test)
 
         # Score the result
         total_score = score(y_test, y_predicted)
