@@ -1,6 +1,6 @@
 #!/bin/sh                                                                       
 
-for i in `seq 0 10`
+for i in `seq 0 900`
 do
     for file in particles hits
     do
