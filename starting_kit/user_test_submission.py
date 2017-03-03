@@ -7,6 +7,17 @@ from importlib import import_module
 def score_function(y_true, y_pred):
     '''Compute a clustering score.
 
+    Cluster ids should be nonnegative integers. A negative integer
+    will mean that the corresponding point does not belong to any
+    cluster.
+
+    We first identify assigned clusters by taking the max count of 
+    unique assigned ids for each true cluster. We remove all unassigned
+    clusters (all assigned ids are -1) and all duplicates (the same
+    assigned id has majority in several true clusters) except the one
+    with the largest count. We add the counts, then divide by the number
+    of events. The score should be between 0 and 1. 
+
     Parameters
     ----------
     y_true : np.array, shape = (n, 2)
@@ -22,73 +33,66 @@ def score_function(y_true, y_pred):
     score = 0.
     event_ids = y_true[:, 0]
     y_true_cluster_ids = y_true[:, 1]
-    y_pred_cluster_ids = y_pred[:, 1]
+    y_pred_cluster_ids = y_pred
 
-    # loop over events
     unique_event_ids = np.unique(event_ids)
     for event_id in unique_event_ids:
-        efficiency_total = 0.
-
-        # indices of the hits in this event
         event_indices = (event_ids==event_id)
-
-        # assingments and particle ids of these hits
         cluster_ids_true = y_true_cluster_ids[event_indices]
         cluster_ids_pred = y_pred_cluster_ids[event_indices]
 
-        # the assignment ids, each of which will be assigned to a particle id
         unique_cluster_ids = np.unique(cluster_ids_true)
         n_cluster = len(unique_cluster_ids)
         n_sample = len(cluster_ids_true)
 
-        assigned_cluster = np.full(
-            shape=n_cluster, fill_value=-1, dtype='int64')
-        point_in_cluster = np.full(
-            shape=n_cluster, fill_value=0, dtype='int64')
-        efficiency = np.full(shape=n_cluster, fill_value=0.)
-
-        # assign points to unique_cluster_ids
+        # assigned_clusters[i] will be the predicted cluster id
+        # we assign (by majority) to true cluster i 
+        assigned_clusters = np.empty(n_cluster, dtype='int64')
+        # true_positives[i] will be the number of points in 
+        # predicted cluster[assigned_clusters[i]]
+        true_positives = np.full(n_cluster, fill_value=0, dtype='int64')
         for i, cluster_id in enumerate(unique_cluster_ids):
-            efficiency[i] = 0.
-
-            # the hits belonging to the particle
+            # true points belonging to a cluster
             true_points = cluster_ids_true[cluster_ids_true == cluster_id]
-            # the assignments of the same hits
+            # predicted points belonging to a cluster
             found_points = cluster_ids_pred[cluster_ids_true == cluster_id]
-
-            # find the biggest cluster within the hits of the particle
-            n_sub_cluster = len(np.unique(found_points[found_points >= 0]))
+            # nonnegative cluster_ids (negative ones are unassigned)
+            assigned_points = found_points[found_points >= 0]
+            # the unique nonnegative predicted cluster ids on true_cluster[i]
+            n_sub_cluster = len(np.unique(assigned_points))
+            # We find the largest predicted cluster in the true cluster.
             if(n_sub_cluster > 0):
-                b = np.bincount(
-                    (found_points[found_points >= 0]).astype(dtype='int64'))
-                a = np.argmax(b)
-                maxcluster = a
-                assigned_cluster[i] = maxcluster
-                point_in_cluster[i] = len(
-                    found_points[found_points == maxcluster])
-
-        # loop over particles to measure what fraction is good
-        sorted = np.argsort(point_in_cluster)
-        point_in_cluster = point_in_cluster[sorted]
-        assigned_cluster = assigned_cluster[sorted]
-        i = 0
-        for cluster_id in unique_cluster_ids:
-            i_point = assigned_cluster[i]
-            # if there is another particle with bigger overlap with the
-            # same cluster, drop this particle
-            if i_point < 0 or\
-                    len(assigned_cluster[assigned_cluster == i_point]) > 1:
-                point_in_cluster = np.delete(point_in_cluster, i)
-                assigned_cluster = np.delete(assigned_cluster, i)
+                # sizes of predicted assigned cluster in true cluster[i]
+                predicted_cluster_sizes = np.bincount(
+                    assigned_points.astype(dtype='int64'))
+                # If there are ties, we assign the tre cluster to the predicted
+                # cluster with the smallest id (combined behavior of np.unique
+                # which sorts the ids and np.argmax which returns the first 
+                # occurence of a tie).
+                assigned_clusters[i] = np.argmax(predicted_cluster_sizes)
+                true_positives[i] = len(
+                    found_points[found_points == assigned_clusters[i]])
+            # If none of the assigned ids are positive, the cluster is unassigned
+            # and true_positive = 0
             else:
-                i += 1
-        n_good = 0.
-        # sum the remaining hits for the good particles
-        n_good = np.sum(point_in_cluster)
-        efficiency_total = efficiency_total + 1. * n_good / n_sample
-        score += efficiency_total
-    score /= len(event_ids)
-    return efficiency_total
+                assigned_clusters[i] = -1
+                true_positives[i] = 0
+
+        # resolve duplicates and count good assignments
+        sorted = np.argsort(true_positives)
+        true_positives_sorted = true_positives[sorted]
+        assigned_clusters_sorted = assigned_clusters[sorted]
+        good_clusters = assigned_clusters_sorted >= 0
+        for i in range(len(assigned_clusters_sorted) - 1):
+            assigned_cluster = assigned_clusters_sorted[i]
+            # duplicates: only keep the last count (which is the largest
+            # because of sorting)
+            if assigned_cluster in assigned_clusters_sorted[i+1:]:
+                good_clusters[i] = False
+        n_good = np.sum(true_positives_sorted[good_clusters])
+        score += 1. * n_good / n_sample
+    score /= len(unique_event_ids)
+    return score
 
 
 filename = 'public_train.csv'
@@ -97,22 +101,20 @@ filename = 'public_train.csv'
 def read_data(filename):
     df = pd.read_csv(filename)
     y_df = df.drop(['layer', 'iphi', 'x', 'y'], axis=1)
-    X_df = df.drop(['particle_id'], axis=1)
+    X_df = df.drop(['cluster_id'], axis=1)
     return X_df.values, y_df.values
 
 
 def train_submission(module_path, X_array, y_array, train_is):
-    clusterer = import_module('clusterer', module_path)
-    cls = clusterer.Clusterer()
-    cls.fit(X_array[train_is], y_array[train_is])
-    return cls
+    clusterer = import_module('hough', module_path)
+    ctr = clusterer.Clusterer()
+    ctr.fit(X_array[train_is], y_array[train_is])
+    return ctr
 
 
 def test_submission(trained_model, X_array, test_is):
-    cls = trained_model
-    y_pred = cls.predict(X_array[test_is])
-    return np.stack(
-        (X_array[test_is][:, 0], y_pred), axis=-1).astype(dtype='int')
+    ctr = trained_model
+    return ctr.predict(X_array[test_is])
 
 
 # We do a single fold because blending would not work anyway:

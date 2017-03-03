@@ -1,11 +1,10 @@
 __author__ = 'mikhail91'
 
 
-import numpy
+import numpy as np
+from sklearn.base import BaseEstimator
 
-coleventX = 4
-
-class Hough(object):
+class Clusterer(BaseEstimator):
 
     def __init__(self, n_theta_bins=100, n_radius_bins=100, min_radius=1., min_hits=4):
         """
@@ -50,26 +49,26 @@ class Hough(object):
 
         x, y = X[:, 2], X[:, 3]
         # Transform cartesian coordinates to polar coordinates
-        hit_phis = numpy.arctan(y / x) * (x != 0) + numpy.pi * (x < 0) + 0.5 * numpy.pi * (x==0) * (y>0) + 1.5 * numpy.pi * (x==0) * (y<0)
-        hit_rs = numpy.sqrt(x**2 + y**2)
+        hit_phis = np.arctan(y / x) * (x != 0) + np.pi * (x < 0) + 0.5 * np.pi * (x==0) * (y>0) + 1.5 * np.pi * (x==0) * (y<0)
+        hit_rs = np.sqrt(x**2 + y**2)
 
         # Set ranges of a track theta and 1/r
-        track_thetas = numpy.linspace(0, 2 * numpy.pi, self.n_theta_bins)
-        track_invrs = numpy.linspace(0, 1. / self.min_radius, self.n_radius_bins)
+        track_thetas = np.linspace(0, 2 * np.pi, self.n_theta_bins)
+        track_invrs = np.linspace(0, 1. / self.min_radius, self.n_radius_bins)
 
         # Init arrays for the results
-        matrix_hough = numpy.zeros((len(track_thetas)+1, len(track_invrs)+1))
+        matrix_hough = np.zeros((len(track_thetas)+1, len(track_invrs)+1))
         track_inds = []
         track_params = []
 
         for num1, theta in enumerate(track_thetas):
 
             # Hough Transform for one hit
-            invr = 2. * numpy.cos(hit_phis - theta) / hit_rs
+            invr = 2. * np.cos(hit_phis - theta) / hit_rs
 
             # Hough Transform digitization
-            bin_inds = numpy.digitize(invr, track_invrs)
-            unique, counts = numpy.unique(bin_inds, return_counts=True)
+            bin_inds = np.digitize(invr, track_invrs)
+            unique, counts = np.unique(bin_inds, return_counts=True)
 
             # Count number of hits in each bin. Fill the results arrays.
             for num2, one in enumerate(unique):
@@ -78,11 +77,11 @@ class Hough(object):
 
                 if counts[num2] >= self.min_hits and one != 0 and one < len(track_invrs) and num1 !=0 and num1 < len(track_thetas):
 
-                    track_inds.append(numpy.arange(len(bin_inds))[bin_inds == one])
+                    track_inds.append(np.arange(len(bin_inds))[bin_inds == one])
                     track_params.append([track_thetas[num1], track_invrs[one]])
 
-        track_inds = numpy.array(track_inds)
-        track_params = numpy.array(track_params)
+        track_inds = np.array(track_inds)
+        track_params = np.array(track_params)
 
         return matrix_hough[:, 1:-1], track_inds, track_params
 
@@ -104,14 +103,14 @@ class Hough(object):
             Hit labels.
         """
 
-        labels = -1. * numpy.ones(n_hits)
-        used = numpy.zeros(n_hits)
+        labels = -1. * np.ones(n_hits)
+        used = np.zeros(n_hits)
         track_id = 0
 
 
         while 1:
 
-            track_lens = numpy.array([len(i[used[i] == 0]) for i in track_inds])
+            track_lens = np.array([len(i[used[i] == 0]) for i in track_inds])
 
             if len(track_lens) == 0:
                 break
@@ -128,7 +127,7 @@ class Hough(object):
             labels[one_track_inds] = track_id
             track_id += 1
 
-        return numpy.array(labels)
+        return np.array(labels)
 
     def fit(self, X, y):
         pass
@@ -174,19 +173,14 @@ class Hough(object):
             Track id labels for the each hit.
         """
 
-        event_ids = numpy.unique(X[:, coleventX])
-        y = numpy.zeros((len(X),2))
-        labels = []
+        unique_event_ids = np.unique(X[:, 0])
+        labels = np.empty(len(X), dtype='int')
         
-        for one_event_id in event_ids:
-            
-            X_event = X[X[:, coleventX] == one_event_id]
-            labels_event = self.predict_one_event(X_event)
-            labels += list(labels_event)
-        
-        y[:,0] = labels
-        y[:,1] = X[:, coleventX]
-        return y
+        for event_id in unique_event_ids:
+            event_indices = (X[:, 0] == event_id)
+            # select an event and drop event ids
+            X_event = X[event_indices][:, 1:]
+            labels[event_indices] = self.predict_one_event(X_event)
 
-
+        return np.array(labels)
 
