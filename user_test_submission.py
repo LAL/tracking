@@ -24,13 +24,19 @@ def score_function(y_true, y_pred):
     y_true_cluster_ids = y_true[:, 1]
     y_pred_cluster_ids = y_pred[:, 1]
 
+    # loop over events
     unique_event_ids = np.unique(event_ids)
     for event_id in unique_event_ids:
         efficiency_total = 0.
+
+        # indices of the hits in this event
         event_indices = (event_ids==event_id)
+
+        # assingments and particle ids of these hits
         cluster_ids_true = y_true_cluster_ids[event_indices]
         cluster_ids_pred = y_pred_cluster_ids[event_indices]
 
+        # the assignment ids, each of which will be assigned to a particle id
         unique_cluster_ids = np.unique(cluster_ids_true)
         n_cluster = len(unique_cluster_ids)
         n_sample = len(cluster_ids_true)
@@ -45,9 +51,12 @@ def score_function(y_true, y_pred):
         for i, cluster_id in enumerate(unique_cluster_ids):
             efficiency[i] = 0.
 
+            # the hits belonging to the particle
             true_points = cluster_ids_true[cluster_ids_true == cluster_id]
+            # the assignments of the same hits
             found_points = cluster_ids_pred[cluster_ids_true == cluster_id]
 
+            # find the biggest cluster within the hits of the particle
             n_sub_cluster = len(np.unique(found_points[found_points >= 0]))
             if(n_sub_cluster > 0):
                 b = np.bincount(
@@ -58,13 +67,15 @@ def score_function(y_true, y_pred):
                 point_in_cluster[i] = len(
                     found_points[found_points == maxcluster])
 
-        # resolve duplicates and count good assignments
+        # loop over particles to measure what fraction is good
         sorted = np.argsort(point_in_cluster)
         point_in_cluster = point_in_cluster[sorted]
         assigned_cluster = assigned_cluster[sorted]
         i = 0
         for cluster_id in unique_cluster_ids:
             i_point = assigned_cluster[i]
+            # if there is another particle with bigger overlap with the
+            # same cluster, drop this particle
             if i_point < 0 or\
                     len(assigned_cluster[assigned_cluster == i_point]) > 1:
                 point_in_cluster = np.delete(point_in_cluster, i)
@@ -72,9 +83,9 @@ def score_function(y_true, y_pred):
             else:
                 i += 1
         n_good = 0.
+        # sum the remaining hits for the good particles
         n_good = np.sum(point_in_cluster)
         efficiency_total = efficiency_total + 1. * n_good / n_sample
-        # remove combinatorials
         score += efficiency_total
     score /= len(event_ids)
     return efficiency_total

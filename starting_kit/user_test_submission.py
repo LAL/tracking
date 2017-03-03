@@ -1,131 +1,140 @@
 import pandas as pd
 import numpy as np
 
-from sklearn.cross_validation import ShuffleSplit
+from sklearn.model_selection import ShuffleSplit
+from importlib import import_module
 
-import Tracking
+def score_function(y_true, y_pred):
+    '''Compute a clustering score.
 
-debug = False
-coleventy = 1
-coleventX = 4
+    Parameters
+    ----------
+    y_true : np.array, shape = (n, 2)
+        The ground truth.
+        first column: event_id
+        second column: cluster_id
+    y_pred : np.array, shape = (n, 2)
+        The predicted cluster assignment.
+        first column: event_id
+        second column: predicted cluster_id
+    """
+    '''
+    score = 0.
+    event_ids = y_true[:, 0]
+    y_true_cluster_ids = y_true[:, 1]
+    y_pred_cluster_ids = y_pred[:, 1]
 
-filename = "../data/hits_merged.csv"
+    # loop over events
+    unique_event_ids = np.unique(event_ids)
+    for event_id in unique_event_ids:
+        efficiency_total = 0.
+
+        # indices of the hits in this event
+        event_indices = (event_ids==event_id)
+
+        # assingments and particle ids of these hits
+        cluster_ids_true = y_true_cluster_ids[event_indices]
+        cluster_ids_pred = y_pred_cluster_ids[event_indices]
+
+        # the assignment ids, each of which will be assigned to a particle id
+        unique_cluster_ids = np.unique(cluster_ids_true)
+        n_cluster = len(unique_cluster_ids)
+        n_sample = len(cluster_ids_true)
+
+        assigned_cluster = np.full(
+            shape=n_cluster, fill_value=-1, dtype='int64')
+        point_in_cluster = np.full(
+            shape=n_cluster, fill_value=0, dtype='int64')
+        efficiency = np.full(shape=n_cluster, fill_value=0.)
+
+        # assign points to unique_cluster_ids
+        for i, cluster_id in enumerate(unique_cluster_ids):
+            efficiency[i] = 0.
+
+            # the hits belonging to the particle
+            true_points = cluster_ids_true[cluster_ids_true == cluster_id]
+            # the assignments of the same hits
+            found_points = cluster_ids_pred[cluster_ids_true == cluster_id]
+
+            # find the biggest cluster within the hits of the particle
+            n_sub_cluster = len(np.unique(found_points[found_points >= 0]))
+            if(n_sub_cluster > 0):
+                b = np.bincount(
+                    (found_points[found_points >= 0]).astype(dtype='int64'))
+                a = np.argmax(b)
+                maxcluster = a
+                assigned_cluster[i] = maxcluster
+                point_in_cluster[i] = len(
+                    found_points[found_points == maxcluster])
+
+        # loop over particles to measure what fraction is good
+        sorted = np.argsort(point_in_cluster)
+        point_in_cluster = point_in_cluster[sorted]
+        assigned_cluster = assigned_cluster[sorted]
+        i = 0
+        for cluster_id in unique_cluster_ids:
+            i_point = assigned_cluster[i]
+            # if there is another particle with bigger overlap with the
+            # same cluster, drop this particle
+            if i_point < 0 or\
+                    len(assigned_cluster[assigned_cluster == i_point]) > 1:
+                point_in_cluster = np.delete(point_in_cluster, i)
+                assigned_cluster = np.delete(assigned_cluster, i)
+            else:
+                i += 1
+        n_good = 0.
+        # sum the remaining hits for the good particles
+        n_good = np.sum(point_in_cluster)
+        efficiency_total = efficiency_total + 1. * n_good / n_sample
+        score += efficiency_total
+    score /= len(event_ids)
+    return efficiency_total
+
+
+filename = 'public_train.csv'
+
 
 def read_data(filename):
-    df = pd.read_csv(filename)[['layer','iphi','x','y','particle','event']]
-    y_df = df.drop(['layer','iphi','x','y'], axis=1)
-    X_df = df.drop(['particle'], axis=1)
+    df = pd.read_csv(filename)
+    y_df = df.drop(['layer', 'iphi', 'x', 'y'], axis=1)
+    X_df = df.drop(['particle_id'], axis=1)
     return X_df.values, y_df.values
 
-def score(y_test, y_pred):
-    
-    total_score = 0.
-    y_events = y_test[:,coleventy]
-    y_test = y_test[:,0]
-    y_pred = y_pred[:,0]
-    
-    events = np.unique(y_events)
-    for ievent in events:
-        eff_total = 0.
-        event_indices=(y_events==ievent)
-        y_test_event = y_test[event_indices]
-        y_pred_event = y_pred[event_indices]
-        
-        particles = np.unique(y_test_event)
-        npart = len(particles)
-        nhit = len(y_test_event)
-        
-        assignedtrack = np.full(shape=npart,fill_value=-1, dtype='int64')
-        hitintrack = np.full(shape=npart,fill_value=0, dtype='int64')
-        eff = np.full(shape=npart,fill_value=0.)
-        con = np.full(shape=npart,fill_value=0.)
-        
-        # assign tracks to particles
-        ipart = 0
-        for particle in particles:
-            
-            eff[ipart] = 0.
-            con[ipart] = 0.
-            
-            true_hits = y_test_event[y_test_event[:] == particle]
-            found_hits = y_pred_event[y_test_event[:] == particle]
-            
-            nsubcluster=len(np.unique(found_hits[found_hits[:] >= 0]))
-            
-            if(nsubcluster > 0):
-                b=np.bincount((found_hits[found_hits[:] >= 0]).astype(dtype='int64'))
-                a=np.argmax(b)
-                
-                maxcluster = a
-                
-                assignedtrack[ipart]=maxcluster
-                hitintrack[ipart]=len(found_hits[found_hits[:] == maxcluster])
-            
-            ipart += 1
-        
-        
-        # resolve duplicates and count good assignments
-        ipart = 0
-        sorted=np.argsort(hitintrack)
-        hitintrack=hitintrack[sorted]
-        assignedtrack=assignedtrack[sorted]
-        #    print hitintrack
-        for particle in particles:
-            itrack=assignedtrack[ipart]
-            if((itrack < 0) | (len(assignedtrack[assignedtrack[:] == itrack])>1)):
-                hitintrack = np.delete(hitintrack,ipart)
-                assignedtrack = np.delete(assignedtrack,ipart)
-            else:
-                ipart += 1
-        ngood = 0.
-        ngood = np.sum(hitintrack)
-        eff_total = eff_total + (float(ngood) / float(nhit))
-        # remove combinatorials
-        
-        total_score += eff_total
-    
-    
-    total_score /= len(y_events)
-    
 
-    return eff_total
+def train_submission(module_path, X_array, y_array, train_is):
+    clusterer = import_module('clusterer', module_path)
+    cls = clusterer.Clusterer()
+    cls.fit(X_array[train_is], y_array[train_is])
+    return cls
 
 
+def test_submission(trained_model, X_array, test_is):
+    cls = trained_model
+    y_pred = cls.predict(X_array[test_is])
+    return np.stack(
+        (X_array[test_is][:, 0], y_pred), axis=-1).astype(dtype='int')
+
+
+# We do a single fold because blending would not work anyway:
+# mean of cluster_ids make no sense
+def get_cv(y_train_array):
+    unique_event_ids = np.unique(y_train_array[:, 0])
+    event_cv = ShuffleSplit(n_splits=1, test_size=0.5, random_state=57)
+    for train_event_is, test_event_is in event_cv.split(unique_event_ids):
+        train_is = np.where(np.in1d(y_train_array[:, 0], train_event_is))
+        test_is = np.where(np.in1d(y_train_array[:, 0], test_event_is))
+        yield train_is, test_is
 
 
 if __name__ == '__main__':
     print("Reading file ...")
-
     X, y = read_data(filename)
-    events = np.unique(X[:,coleventX])
-
-    #no training, use all sample for test:
-    skf = ShuffleSplit(
-    len(events), n_iter=1, test_size=0.1, random_state=57)
-
-    print("Training file ...")
-    for train_is, test_is in skf:
-        print '--------------------------'
-
-        # use dummy clustering
-        tracker = Tracking.HitToTrackAssignment()
-
-        train_hit_is = np.where(np.in1d(y[:,coleventy],train_is))
-        test_hit_is = np.where(np.in1d(y[:,coleventy],test_is))
-
-        X_train = X[train_hit_is]
-        y_train = y[train_hit_is]
-
-        X_test = X[test_hit_is]
-        y_test = y[test_hit_is]
-
-        y_predicted = np.zeros((len(y_test),2))
-
-        tracker.fit(X_train, y_train)
-
-        y_predicted = tracker.predict(X_test)
-
-        # Score the result
-        total_score = score(y_test, y_predicted)
-        print 'average score = ', total_score
+    unique_event_ids = np.unique(X[:, 0])
+    cv = get_cv(y)
+    print("Training ...")
+    for train_is, test_is in cv:
+        trained_model = train_submission('', X, y, train_is)
+        y_pred = test_submission(trained_model, X, test_is)
+        score = score_function(y[test_is], y_pred)
+        print 'score = ', score
 
