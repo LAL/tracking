@@ -24,14 +24,16 @@ def score_function(y_true, y_pred):
         The ground truth.
         first column: event_id
         second column: cluster_id
-    y_pred : np.array, shape = n
-        The predicted cluster assignment (predicted cluster_id)
+    y_pred : np.array, shape = (n, 2)
+        The predicted cluster assignment.
+        first column: event_id
+        second column: predicted cluster_id
     """
     '''
     score = 0.
     event_ids = y_true[:, 0]
     y_true_cluster_ids = y_true[:, 1]
-    y_pred_cluster_ids = y_pred
+    y_pred_cluster_ids = y_pred[:, 1]
 
     unique_event_ids = np.unique(event_ids)
     for event_id in unique_event_ids:
@@ -87,6 +89,7 @@ def score_function(y_true, y_pred):
             # because of sorting)
             if assigned_cluster in assigned_clusters_sorted[i+1:]:
                 good_clusters[i] = False
+        print good_clusters
         n_good = np.sum(true_positives_sorted[good_clusters])
         score += 1. * n_good / n_sample
     score /= len(unique_event_ids)
@@ -98,44 +101,33 @@ filename = 'public_train.csv'
 
 def read_data(filename):
     df = pd.read_csv(filename)
-    y_df = df[['event_id', 'cluster_id']]
-    X_df = df.drop(['cluster_id'], axis=1)
+    y_df = df.drop(['layer', 'iphi', 'x', 'y'], axis=1)
+    X_df = df.drop(['particle_id'], axis=1)
     return X_df.values, y_df.values
 
 
 def train_submission(module_path, X_array, y_array, train_is):
     clusterer = import_module('clusterer', module_path)
-    ctr = clusterer.Clusterer()
-    ctr.fit(X_array[train_is], y_array[train_is])
-    return ctr
+    cls = clusterer.Clusterer()
+    cls.fit(X_array[train_is], y_array[train_is])
+    return cls
 
 
 def test_submission(trained_model, X_array, test_is):
-    ctr = trained_model
-    X = X_array[test_is]
-    unique_event_ids = np.unique(X[:, 0])
-    cluster_ids = np.empty(len(X), dtype='int')
-
-    for event_id in unique_event_ids:
-        event_indices = (X[:, 0] == event_id)
-        # select an event and drop event ids
-        X_event = X[event_indices][:, 1:]
-        cluster_ids[event_indices] = ctr.predict_single_event(X_event)
-
-    return np.array(cluster_ids)
+    cls = trained_model
+    y_pred = cls.predict(X_array[test_is])
+    return np.stack(
+        (X_array[test_is][:, 0], y_pred), axis=-1).astype(dtype='int')
 
 
 # We do a single fold because blending would not work anyway:
 # mean of cluster_ids make no sense
 def get_cv(y_train_array):
     unique_event_ids = np.unique(y_train_array[:, 0])
-    event_cv = ShuffleSplit(
-        n_splits=1, test_size=0.5, random_state=57)
+    event_cv = ShuffleSplit(n_splits=1, test_size=0.5, random_state=57)
     for train_event_is, test_event_is in event_cv.split(unique_event_ids):
-        train_is = np.where(
-            np.in1d(y_train_array[:, 0], unique_event_ids[train_event_is]))[0]
-        test_is = np.where(
-            np.in1d(y_train_array[:, 0], unique_event_ids[test_event_is]))[0]
+        train_is = np.where(np.in1d(y_train_array[:, 0], train_event_is))
+        test_is = np.where(np.in1d(y_train_array[:, 0], test_event_is))
         yield train_is, test_is
 
 
@@ -144,10 +136,9 @@ if __name__ == '__main__':
     X, y = read_data(filename)
     unique_event_ids = np.unique(X[:, 0])
     cv = get_cv(y)
+    print("Training ...")
     for train_is, test_is in cv:
-        print("Training ...")
         trained_model = train_submission('', X, y, train_is)
-        print("Testing ...")
         y_pred = test_submission(trained_model, X, test_is)
         score = score_function(y[test_is], y_pred)
         print 'score = ', score
