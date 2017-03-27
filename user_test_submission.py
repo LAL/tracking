@@ -24,10 +24,8 @@ def score_function(y_true, y_pred):
         The ground truth.
         first column: event_id
         second column: cluster_id
-    y_pred : np.array, shape = (n, 2)
-        The predicted cluster assignment.
-        first column: event_id
-        second column: predicted cluster_id
+    y_pred : np.array, shape = n
+        The predicted cluster assignment (predicted cluster_id)
     """
     '''
     score = 0.
@@ -95,18 +93,18 @@ def score_function(y_true, y_pred):
     return score
 
 
-filename = 'public_train.csv'
+filename = 'starting_kit/public_train.csv'
 
 
 def read_data(filename):
     df = pd.read_csv(filename)
-    y_df = df.drop(['layer', 'iphi', 'x', 'y'], axis=1)
+    y_df = df[['event_id', 'cluster_id']]
     X_df = df.drop(['cluster_id'], axis=1)
     return X_df.values, y_df.values
 
 
 def train_submission(module_path, X_array, y_array, train_is):
-    clusterer = import_module('hough', module_path)
+    clusterer = import_module('fast_hough3', module_path)
     ctr = clusterer.Clusterer()
     ctr.fit(X_array[train_is], y_array[train_is])
     return ctr
@@ -114,17 +112,30 @@ def train_submission(module_path, X_array, y_array, train_is):
 
 def test_submission(trained_model, X_array, test_is):
     ctr = trained_model
-    return ctr.predict(X_array[test_is])
+    X = X_array[test_is]
+    unique_event_ids = np.unique(X[:, 0])
+    cluster_ids = np.empty(len(X), dtype='int')
+
+    for event_id in unique_event_ids:
+        event_indices = (X[:, 0] == event_id)
+        # select an event and drop event ids
+        X_event = X[event_indices][:, 1:]
+        cluster_ids[event_indices] = ctr.predict_single_event(X_event)
+
+    return np.array(cluster_ids)
 
 
 # We do a single fold because blending would not work anyway:
 # mean of cluster_ids make no sense
 def get_cv(y_train_array):
     unique_event_ids = np.unique(y_train_array[:, 0])
-    event_cv = ShuffleSplit(n_splits=1, test_size=0.5, random_state=57)
+    event_cv = ShuffleSplit(
+        n_splits=1, test_size=0.5, random_state=57)
     for train_event_is, test_event_is in event_cv.split(unique_event_ids):
-        train_is = np.where(np.in1d(y_train_array[:, 0], train_event_is))
-        test_is = np.where(np.in1d(y_train_array[:, 0], test_event_is))
+        train_is = np.where(
+            np.in1d(y_train_array[:, 0], unique_event_ids[train_event_is]))[0]
+        test_is = np.where(
+            np.in1d(y_train_array[:, 0], unique_event_ids[test_event_is]))[0]
         yield train_is, test_is
 
 
@@ -133,9 +144,10 @@ if __name__ == '__main__':
     X, y = read_data(filename)
     unique_event_ids = np.unique(X[:, 0])
     cv = get_cv(y)
-    print("Training ...")
     for train_is, test_is in cv:
+        print("Training ...")
         trained_model = train_submission('', X, y, train_is)
+        print("Testing ...")
         y_pred = test_submission(trained_model, X, test_is)
         score = score_function(y[test_is], y_pred)
         print 'score = ', score
