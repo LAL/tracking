@@ -93,7 +93,7 @@ def score_function(y_true, y_pred):
     return score
 
 
-filename = 'starting_kit/public_train.csv'
+filename = 'hits_small.csv'
 
 
 def read_data(filename):
@@ -104,7 +104,7 @@ def read_data(filename):
 
 
 def train_submission(module_path, X_array, y_array, train_is):
-    clusterer = import_module('fast_hough3', module_path)
+    clusterer = import_module('hough1_yy01', module_path)
     ctr = clusterer.Clusterer()
     ctr.fit(X_array[train_is], y_array[train_is])
     return ctr
@@ -130,7 +130,7 @@ def test_submission(trained_model, X_array, test_is):
 def get_cv(y_train_array):
     unique_event_ids = np.unique(y_train_array[:, 0])
     event_cv = ShuffleSplit(
-        n_splits=1, test_size=0.5, random_state=57)
+        n_splits=1, test_size=0.02, random_state=57)
     for train_event_is, test_event_is in event_cv.split(unique_event_ids):
         train_is = np.where(
             np.in1d(y_train_array[:, 0], unique_event_ids[train_event_is]))[0]

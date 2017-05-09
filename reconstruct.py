@@ -11,13 +11,13 @@ if __name__ == '__main__':
 
     fitter = fit.TrackFitter(B=1.)
 
-    data_track = pd.DataFrame({'event':[0],'track':[0],'pt':[0.], 'phi':[0.], 'xVtx':[0.], 'yVtx':[0.]})
+    data_track = pd.DataFrame({'event_id':[0],'track_id':[0],'pt':[0.], 'phi':[0.], 'xVtx':[0.], 'yVtx':[0.]})
     data_track = data_track.drop(data_track.index[[0]])
 
     df = pd.read_csv("hits_"+str(N)+".csv")
     y_df = df[['particle']]
     #    X_df = df.drop(['hit','layer','particle','event'], axis=1)
-    X_df = df.drop(['particle','layer','iphi'], axis=1)
+    #    X_df = df.drop(['cluster_id','layer','iphi'], axis=1)
 
 #replace particle with 100000000*event+particle
 
