@@ -73,7 +73,7 @@ gen = Generator("+")
 for o in myops:
     gen.split(o)
 
-print gen.formulate()
+print(gen.formulate())
 
 
 

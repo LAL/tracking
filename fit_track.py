@@ -22,7 +22,7 @@ def rotateToQuadrant(x,y):
     c, s = np.cos(-phi), np.sin(-phi)
     xr=c*x-s*y
     yr=s*x+c*y
-    print phi
+    print(phi)
     return xr,yr
 
 def func(x, r, vx, vy):

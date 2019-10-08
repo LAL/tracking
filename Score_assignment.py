@@ -66,7 +66,7 @@ def score(y_test, y_pred):
         ngood = np.sum(hitintrack)
         eff_total = eff_total + (float(ngood) / float(nhit))
         # remove combinatorials
-        print npart, nhit, eff_total
+        print(npart, nhit, eff_total)
   
         total_score += eff_total
 

@@ -163,9 +163,11 @@ class Detector(object):
         for irho in range(0, self.Nrho):
             for iphi in range(0,self.Nphi[irho]):
                 if(self.cells_hit[irho,iphi] == 1):
-                    self.history = self.history.append(pd.DataFrame({'particle':self.hit_particle[irho,iphi], 'hit':[ihit], 'layer':[irho],'iphi':[iphi], 'x':self.cells_x[irho,iphi], 'y':self.cells_y[irho,iphi]}), ignore_index=True)
+                    self.history = self.history.append(pd.DataFrame(
+						{'particle':self.hit_particle[irho,iphi], 'hit':[ihit], 'layer':[irho],'iphi':[iphi], 'x':self.cells_x[irho,iphi], 'y':self.cells_y[irho,iphi]}
+						), ignore_index=True)
                     ihit+=1
-        self.history=self.history.sort(['particle','layer','hit'])
+        self.history=self.history.sort_values(['particle','layer','hit'])
 
         return self.history
 
@@ -205,10 +207,10 @@ class Simulator(object):
         debug=False
         self.p = Particle(x,v,int(charge),id,irhostart)
         if abs(self.p.charge)!=1:
-            print "Detector::propagate abs(charge)!=1 not possible !",charge
+            print("Detector::propagate abs(charge)!=1 not possible !",charge)
             exit() # very brutal
 
-        if debug: print self.p
+        if debug: print(self.p)
         
         for irho in range(self.p.layer+1,self.detector.Nrho):
             # direct extrapolation to next detector
@@ -217,16 +219,16 @@ class Simulator(object):
             # coordinates of the center of rotation
             tocenter = - charge*np.cross(self.p.momentum, [0,0,self.bmag]) # vector from position to center of rotation
             radius=np.linalg.norm(tocenter)
-            if debug : print "tocenter=",tocenter," radius=",radius
+            if debug : print("tocenter=",tocenter," radius=",radius)
 
             rotcenter=self.p.position+tocenter
-            if debug : print "rotcenter=",rotcenter
+            if debug : print("rotcenter=",rotcenter)
 
             nextrho=self.detector.cells_r[irho]
             nextrhocenter=np.zeros(3)
             #could be done more efficiently
             vintersect=circ_intersect(rotcenter, nextrhocenter, radius, nextrho)
-            if debug:print "nextrho= ",nextrho," vintersect= ", vintersect
+            if debug:print("nextrho= ",nextrho," vintersect= ", vintersect)
 
             if len(vintersect)==0:
                 break
@@ -259,7 +261,7 @@ class Simulator(object):
             
             #now determine which detector element has been hit
             iphi=int(to02pi(newphipos)/(2*math.pi)*self.detector.Nphi[irho]) # FIXME there should a Detector function for this
-            if debug: print "newphipos=",newphipos,"iphi=",iphi,"cell phi",self.detector.cells_phi[irho,iphi]
+            if debug: print("newphipos=",newphipos,"iphi=",iphi,"cell phi",self.detector.cells_phi[irho,iphi])
             
             self.p.iphi=iphi
 
@@ -278,7 +280,7 @@ class Simulator(object):
 
 
 
-            if debug : print self.p
+            if debug : print(self.p)
 
             #if track stop, stop here
             rnd=np.random.random()

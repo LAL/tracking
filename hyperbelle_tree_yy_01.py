@@ -161,7 +161,7 @@ class Clusterer(BaseEstimator):
             elif first_layer != 0:
                 unfinished_tracks_begin[first_layer].append(track)
 
-        for last_layer, unfinished_tracks in unfinished_tracks_end.items():
+        for last_layer, unfinished_tracks in list(unfinished_tracks_end.items()):
             for unfinished_track in unfinished_tracks:
                 other_unfinished_tracks = unfinished_tracks_begin[last_layer + 2]
 

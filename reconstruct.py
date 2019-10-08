@@ -42,7 +42,7 @@ if __name__ == '__main__':
     
     # event loop for fitting
     for ievent in []: # np.unique(df['event'].values):
-        if ievent % 100 == 0 : print "processing event ", ievent
+        if ievent % 100 == 0 : print("processing event ", ievent)
         event_indices=(df['event']==ievent).values
         event_df = df.loc[event_indices]
  

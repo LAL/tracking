@@ -30,10 +30,10 @@ data_particle = data_particle.drop(data_particle.index[[0]])
 np.random.seed(seed)
 event_offset = seed * N
 
-print "Will now produce ",N," events with in average",nperevent, " tracks"
+print("Will now produce ",N," events with in average",nperevent, " tracks")
 for ievent in range(event_offset,N+event_offset):
 
-    if(ievent % 1 == 0): print "processing event : ",ievent
+    if(ievent % 1 == 0): print("processing event : ",ievent)
     event = pd.DataFrame({'event':[0],'particle':[0],'hit':[0],'layer':[0],'iphi':[0], 'x':[0.], 'y':[0.]})
     event = event.drop(event.index[[0]])
 
@@ -58,7 +58,7 @@ for ievent in range(event_offset,N+event_offset):
         momentum=np.array([pt*np.cos(phi),pt*np.sin(phi)])
         xVtx=position[0]
         yVtx=position[1]
-        charge=2*np.random.random_integers(0,1)-1
+        charge=2*np.random.randint(0, 2)-1
 
         #DR simtrack=sim.propagate(position,velocity, step = 20, id=p)
         simtrack=sim.propagate(position,momentum, charge=charge,id=p)
@@ -99,11 +99,10 @@ data = data.drop(['hit'], axis=1)
 
 # precision could probably be reduced
 data.to_csv("hits_"+str(N)+"_"+str(seed)+".csv",header=(seed==0),
-            cols=['event','particle','layer','iphi','x', 'y'],
-            engine='python', index=False)
+            columns=['event','particle','layer','iphi','x', 'y'], index=False)
 data_particle.to_csv("particles_"+str(N)+"_"+str(seed)+".csv",header=(seed==0),
-                     cols=['event','particle','pt', 'phi', 'xVtx', 'yVtx'],
-                     engine='python', index=False)
+                     columns=['event','particle','pt', 'phi', 'xVtx', 'yVtx'],
+                     index=False)
 
 
 
